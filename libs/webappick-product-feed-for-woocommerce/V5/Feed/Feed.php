@@ -4,6 +4,7 @@ namespace CTXFeed\V5\Feed;
 
 
 use CTXFeed\V5\Common\Helper;
+use CTXFeed\V5\Helper\CronHelper;
 use CTXFeed\V5\Helper\FeedHelper;
 use CTXFeed\V5\Product\AttributeValueByType;
 use \WP_Error;
@@ -39,23 +40,13 @@ class Feed {
 	/**
 	 * Update feed status
 	 */
-	public static function update_feed_status($feedName, $status) {
-		$feedName = isset( $feedName ) ? sanitize_text_field( wp_unslash( $feedName ) ) : false;
-		if ( ! empty( $feedName ) ) {
-			$feedInfo           = maybe_unserialize( get_option( $feedName ) );
-			$feedInfo['status'] = isset( $status ) && 1 === (int) $status ? 1 : 0;
+	public static function update_feed_status($feed_name, $status) {
+		$feed_name = isset( $feed_name ) ? sanitize_text_field( wp_unslash( $feed_name ) ) : false;
+		if ( ! empty( $feed_name ) ) {
+			$feed_info           = maybe_unserialize( get_option( $feed_name ) );
+			$feed_info['status'] = isset( $status ) && 1 === (int) $status ? 1 : 0;
 
-			$feed_slug = str_replace( 'wf_feed_', 'wf_config', $feedName );
-			if ( 1 === $feedInfo['status'] ) {
-				if ( ! wp_next_scheduled( 'woo_feed_update_single_feed', array( $feed_slug ) ) ) {
-					$interval = absint( get_option( 'wf_schedule' ) );
-					wp_schedule_event( (time() + $interval), 'woo_feed_corn', 'woo_feed_update_single_feed', array( $feed_slug ) );
-				}
-			} else {
-				wp_clear_scheduled_hook( 'woo_feed_update_single_feed', array( $feed_slug ) );
-			}
-
-			update_option( sanitize_text_field( wp_unslash( $feedName ) ), serialize( $feedInfo ), false ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
+			update_option( sanitize_text_field( wp_unslash( $feed_name ) ), serialize( $feed_info ), false ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
 			return true;
 		}
 
@@ -80,7 +71,7 @@ class Feed {
 		$deleted = false;
 		$file    = Helper::get_file( $feed_name, $feedInfo['provider'], $feedInfo['feedType'] );
 		// delete any leftover
-		Helper::unlink_tempFiles( $feedInfo, $feed_name );
+		FeedHelper::unlink_temporary_files( $feedInfo, $feed_name );
 		if ( file_exists( $file ) ) {
 			// file exists in upload directory
 			if ( unlink( $file ) ) { // phpcs:ignore
@@ -95,8 +86,9 @@ class Feed {
 		}
 
 		// Delete cron schedule.
-		$feed_cron_param = 'wf_config' . $feed_name;
-		wp_clear_scheduled_hook( 'woo_feed_update_single_feed', array( $feed_cron_param ) );
+		// Delete cron schedule.
+		$hook_name = CronHelper::get_cron_hook_name( $feed_name, true );
+		CronHelper::delete_cron_job( $hook_name );
 
 		return $deleted;
 

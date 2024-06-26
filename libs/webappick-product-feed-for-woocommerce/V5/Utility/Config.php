@@ -45,10 +45,10 @@ class Config {// phpcs:ignore
 	public function __construct( $feed_info, $context = 'view' ) {
 		if ( isset( $feed_info['option_value']['feedrules'] ) ) {
 			$feed_info = self::process_old_version_feed_created_products_id( $feed_info );
-			$feedrules    = $feed_info['option_value']['feedrules'];
+			$feedrules = $feed_info['option_value']['feedrules'];
 		} else {
-			$feedrules =  [];
-			$feed_info =  [];
+			$feedrules = [];
+			$feed_info = [];
 		}
 
 		$this->feed_info = $feed_info;
@@ -448,26 +448,33 @@ class Config {// phpcs:ignore
 	 * @return bool|array
 	 */
 	public function get_number_format() {
-		if ( isset( $this->config['decimal_separator'] ) ) {
-            if( Helper::is_pro() ){
-                $number_format = array(
-                    'decimal_separator'  => apply_filters( 'ctx_feed_number_format_decimal_separator', $this->config['decimal_separator'], $this->config ),
-                    'thousand_separator' => apply_filters( 'ctx_feed_number_format_thousand_separator', $this->config['thousand_separator'], $this->config ),
-                    'decimals'           => apply_filters( 'ctx_feed_number_format_decimals', $this->config['decimals'], $this->config ),
-                );
-            }else{
-                $number_format = array(
-                    'decimal_separator'     => apply_filters( 'wc_get_price_decimal_separator', get_option( 'woocommerce_price_decimal_sep' ) ),
-			        'thousand_separator'    => stripslashes( apply_filters( 'wc_get_price_thousand_separator', get_option( 'woocommerce_price_thousand_sep' ) ) ),
-			         'decimals'              => absint( apply_filters( 'wc_get_price_decimals', get_option( 'woocommerce_price_num_decimals', 2 ) ) ),
-                );
-            }
+		$number_format = array(
+			'decimal_separator'  => wc_get_price_decimal_separator(),
+			'thousand_separator' => wc_get_price_thousand_separator(),
+			'decimals'           => wc_get_price_decimals(),
+		);
 
+		if ( Helper::is_pro() ) {
+			if ( isset( $this->config['decimal_separator'] ) && $this->config['decimal_separator'] ) {
+				$number_format['decimal_separator'] = apply_filters( 'ctx_feed_number_format_decimal_separator', $this->config['decimal_separator'], $this->config );
+			}
 
-			return apply_filters( 'ctx_feed_number_format', $number_format, $this->config );
+			if ( isset( $this->config['thousand_separator'] ) && $this->config['thousand_separator'] ) {
+				$number_format['thousand_separator'] = apply_filters( 'ctx_feed_number_format_thousand_separator', $this->config['thousand_separator'], $this->config );
+			}
+
+			if ( isset( $this->config['decimals'] ) ) {
+				if ( is_numeric( $this->config['decimals'] ) ) {
+					$decimals = absint( $this->config['decimals'] );
+				} else {
+					$decimals = $number_format['decimals'];
+				}
+
+				$number_format['decimals'] = apply_filters( 'ctx_feed_number_format_decimals', $decimals, $this->config );
+			}
 		}
 
-		return false;
+		return apply_filters( 'ctx_feed_number_format', $number_format, $this->config );
 	}
 
 	/**
@@ -475,7 +482,8 @@ class Config {// phpcs:ignore
 	 *
 	 * @return array|bool
 	 */
-	public function get_products_to_exclude() {
+	public
+	function get_products_to_exclude() {
 		if ( isset( $this->config['filter_mode'] ) ) {
 			$mode = $this->config['filter_mode'];
 
@@ -492,7 +500,8 @@ class Config {// phpcs:ignore
 	 *
 	 * @return array|bool
 	 */
-	public function get_products_to_include() {
+	public
+	function get_products_to_include() {
 		if ( isset( $this->config['filter_mode'] ) ) {
 			$mode = $this->config['filter_mode'];
 
@@ -509,7 +518,8 @@ class Config {// phpcs:ignore
 	 *
 	 * @return mixed
 	 */
-	public function get_categories_to_exclude() {
+	public
+	function get_categories_to_exclude() {
 		if ( isset( $this->config['filter_mode'] ) ) {
 			$mode = $this->config['filter_mode'];
 
@@ -526,7 +536,8 @@ class Config {// phpcs:ignore
 	 *
 	 * @return mixed
 	 */
-	public function get_categories_to_include() {
+	public
+	function get_categories_to_include() {
 		if ( isset( $this->config['filter_mode'] ) ) {
 			$mode = $this->config['filter_mode'];
 
@@ -543,7 +554,8 @@ class Config {// phpcs:ignore
 	 *
 	 * @return mixed
 	 */
-	public function get_post_status_to_include() {
+	public
+	function get_post_status_to_include() {
 		$status = array( 'draft', 'pending', 'private', 'publish' );
 
 		if (
@@ -569,7 +581,8 @@ class Config {// phpcs:ignore
 	 *
 	 * @return array|bool
 	 */
-	public function get_vendors_to_include() {
+	public
+	function get_vendors_to_include() {
 		if ( ! empty( $this->config['vendors'] ) ) {
 			if ( is_array( $this->config['vendors'] ) ) {
 				return $this->config['vendors'];
@@ -586,7 +599,8 @@ class Config {// phpcs:ignore
 	 *
 	 * @return bool
 	 */
-	public function get_variations_to_include() {
+	public
+	function get_variations_to_include() {
 		return isset( $this->config['is_variations'] ) && in_array(
 				$this->config['is_variations'],
 				array(
@@ -602,7 +616,8 @@ class Config {// phpcs:ignore
 	 *
 	 * @return array|bool
 	 */
-	public function get_advance_filters() {
+	public
+	function get_advance_filters() {
 		if ( isset( $this->config['fattribute'] ) ) {
 			return array(
 				'fattribute'    => $this->config['fattribute'],
@@ -620,7 +635,8 @@ class Config {// phpcs:ignore
 	 *
 	 * @return array|bool
 	 */
-	public function get_ftp_config() {
+	public
+	function get_ftp_config() {
 		if ( $this->is_ftp_enabled() ) {
 			return array(
 				'type'       => $this->config['ftporsftp'],
@@ -640,7 +656,8 @@ class Config {// phpcs:ignore
 	/**
 	 * @return bool
 	 */
-	public function is_ftp_enabled() {
+	public
+	function is_ftp_enabled() {
 		return isset( $this->config['ftpenabled'] ) && $this->config['ftpenabled'];
 	}
 
@@ -649,7 +666,8 @@ class Config {// phpcs:ignore
 	 *
 	 * @return array|bool
 	 */
-	public function get_variable_config() {
+	public
+	function get_variable_config() {
 		if ( isset( $this->config['is_variations'] ) ) {
 			return [
 				"is_variations"     => $this->config['is_variations'],
@@ -666,7 +684,8 @@ class Config {// phpcs:ignore
 	 *
 	 * @return mixed
 	 */
-	public function get_composite_price_type() {
+	public
+	function get_composite_price_type() {
 		if ( isset( $this->config['composite_price'] ) ) {
 			return $this->config['composite_price'];
 		}
@@ -679,7 +698,8 @@ class Config {// phpcs:ignore
 	 *
 	 * @return array
 	 */
-	public function get_feed_info() {
+	public
+	function get_feed_info() {
 		return $this->feed_info;
 	}
 
@@ -688,7 +708,8 @@ class Config {// phpcs:ignore
 	 *
 	 * @return array
 	 */
-	public function get_config() {
+	public
+	function get_config() {
 		return $this->config;
 	}
 
@@ -700,22 +721,13 @@ class Config {// phpcs:ignore
 	 *
 	 * @return bool|string
 	 */
-	public function save_config( $feedrules, $feed_option_name = null ) {
-		$prepared_data    = FeedHelper::prepare_feed_rules_to_save( $feedrules, $feed_option_name );
-		$update           = $prepared_data['is_update'];
-		$feed_option_name = $prepared_data['feed_option_name'];
-
+	public
+	function save_config(
+		$feedrules, $feed_option_name = null
+	) {
 		$this->set_config( $feedrules );
 
-		FeedHelper::call_action_before_update_feed_config( $update, $feedrules, $feed_option_name );
-
-		if ( update_option( $feed_option_name, $prepared_data['feedrules_to_save'] ) ) {
-			FeedHelper::call_action_after_update_feed_config( $update, $feedrules, $feed_option_name );
-
-			return $feed_option_name;
-		}
-
-		return false;
+		return FeedHelper::save_feed_config_data( $feedrules, $feed_option_name );
 	}
 
 	/**
@@ -723,8 +735,9 @@ class Config {// phpcs:ignore
 	 *
 	 * @return array|bool
 	 */
-	public function get_feed_url() {
-		if ( ! empty( $this->feed_info['option_value']['url'] ) ) {
+	public
+	function get_feed_url() {
+		if ( isset($this->feed_info['option_value']['url']) && ! empty( $this->feed_info['option_value']['url'] ) ) {
 			return $this->feed_info['option_value']['url'];
 		}
 
@@ -736,7 +749,8 @@ class Config {// phpcs:ignore
 	 *
 	 * @return string|bool
 	 */
-	public function get_feed_path() {
+	public
+	function get_feed_path() {
 		$upload_dir = wp_get_upload_dir();
 
 		if ( ! isset( $this->config['provider'] ) && ! isset( $this->config['feedType'] ) ) {
@@ -751,7 +765,8 @@ class Config {// phpcs:ignore
 	 *
 	 * @return array|bool
 	 */
-	public function get_feed_status() {
+	public
+	function get_feed_status() {
 		if ( isset( $this->feed_info['status'] ) ) {
 			return $this->feed_info['status'];
 		}
@@ -767,12 +782,20 @@ class Config {// phpcs:ignore
 	 *
 	 * @return array|mixed
 	 */
-	public function get_attribute_output_types( $attribute, $merchant_attribute ) {
+	public
+	function get_attribute_output_types(
+		$attribute, $merchant_attribute
+	) {
 		$output_types    = $this->config['output_type'];
 		$attribute_index = $this->get_attribute_index( $attribute, $merchant_attribute );
 
 		if ( ! empty( $output_types[ $attribute_index ] ) ) {
 			return $output_types[ $attribute_index ];
+		}else{
+			$special_templates = FeedHelper::get_special_templates();
+			if ( in_array( $this->provider, $special_templates, true ) && strpos( $attribute, 'price' ) !== false) {
+				return array(6);
+			}
 		}
 
 		return array();
@@ -786,7 +809,10 @@ class Config {// phpcs:ignore
 	 *
 	 * @return array|mixed
 	 */
-	public function get_attribute_commands( $attribute, $merchant_attribute ) {
+	public
+	function get_attribute_commands(
+		$attribute, $merchant_attribute
+	) {
 		$commands        = $this->config['limit'];
 		$attribute_index = $this->get_attribute_index( $attribute, $merchant_attribute );
 
@@ -805,7 +831,10 @@ class Config {// phpcs:ignore
 	 *
 	 * @return array
 	 */
-	public function get_prefix_suffix( $attribute, $merchant_attribute ) {
+	public
+	function get_prefix_suffix(
+		$attribute, $merchant_attribute
+	) {
 		$prefixes        = $this->config['prefix'];
 		$suffixes        = $this->config['suffix'];
 		$attribute_index = $this->get_attribute_index( $attribute, $merchant_attribute );
@@ -836,7 +865,10 @@ class Config {// phpcs:ignore
 	 *
 	 * @return int|string
 	 */
-	public function get_attribute_index( $attribute, $merchant_attribute ) {
+	public
+	function get_attribute_index(
+		$attribute, $merchant_attribute
+	) {
 		$value_attributes    = $this->config['attributes'];
 		$merchant_attributes = $this->config['mattributes'];
 		$attributes_type     = $this->config['type'];
@@ -889,7 +921,10 @@ class Config {// phpcs:ignore
 	 *
 	 * @return array
 	 */
-	public static function process_old_version_feed_created_products_id( $feed_info ) {
+	public
+	static function process_old_version_feed_created_products_id(
+		$feed_info
+	) {
 		if ( isset( $feed_info['option_value']['feedrules']['product_ids'] ) && ! is_array( $feed_info['option_value']['feedrules']['product_ids'] ) ) {
 			$included_ids_str = $feed_info['option_value']['feedrules']['product_ids'];
 
@@ -912,11 +947,14 @@ class Config {// phpcs:ignore
 	/**
 	 * Set Feed Configuration.
 	 *
-	 * @param array $config Feed Config.
+	 * @param array $feedrules Feed Config.
 	 *
 	 * @return void
 	 */
-	private function set_config( $config ) {// phpcs:ignore
+	private
+	function set_config(
+		$feedrules
+	) {// phpcs:ignore
 		$defaults = array(
 			'provider'              => '',
 			'feed_country'          => '',
@@ -960,10 +998,10 @@ class Config {// phpcs:ignore
 			'is_outOfStock'         => false,
 			'is_backorder'          => false,
 			'is_emptyDescription'   => false,
-			'is_emptyTitle'         => 'n',
+			'is_emptyTitle'         => false,
 			'is_emptyImage'         => false,
 			'is_emptyPrice'         => false,
-			'product_visibility'    => 0,
+			'product_visibility'    => false,
 			'shipping_country'      => '',
 			'tax_country'           => '',
 			// include hidden? 1 yes 0 no
@@ -975,7 +1013,7 @@ class Config {// phpcs:ignore
 			'decimals'              => absint( apply_filters( 'wc_get_price_decimals', get_option( 'woocommerce_price_num_decimals', 2 ) ) ),
 		);
 
-		$this->config                = wp_parse_args( $config, $defaults );
+		$this->config                = wp_parse_args( $feedrules, $defaults );
 		$this->config['filter_mode'] = wp_parse_args(
 			$this->config['filter_mode'],
 			array(
@@ -1018,7 +1056,10 @@ class Config {// phpcs:ignore
 	 *
 	 * @return bool
 	 */
-	public function __isset( $name ) {
+	public
+	function __isset(
+		$name
+	) {
 		return isset( $this->config[ $name ] );
 	}
 
@@ -1029,7 +1070,10 @@ class Config {// phpcs:ignore
 	 *
 	 * @return mixed
 	 */
-	public function __get( $name ) {
+	public
+	function __get(
+		$name
+	) {
 		return $this->config[ $name ];
 	}
 
@@ -1041,7 +1085,10 @@ class Config {// phpcs:ignore
 	 *
 	 * @return string
 	 */
-	public function __set( $name, $value ) {
+	public
+	function __set(
+		$name, $value
+	) {
 		return $this->config[ $name ] = $value;
 	}
 
@@ -1052,7 +1099,10 @@ class Config {// phpcs:ignore
 	 *
 	 * @return void
 	 */
-	public function __unset( $name ) {
+	public
+	function __unset(
+		$name
+	) {
 		unset( $this->config[ $name ] );
 	}
 
@@ -1063,7 +1113,10 @@ class Config {// phpcs:ignore
 	 *
 	 * @return mixed|null
 	 */
-	public static function free_default_feed_rules( $rules = [] ) {
+	public
+	static function free_default_feed_rules(
+		$rules = []
+	) {
 		$defaults = array(
 			'provider'            => '',
 			'filename'            => '',
@@ -1124,7 +1177,10 @@ class Config {// phpcs:ignore
 	 *
 	 * @return mixed|null
 	 */
-	public static function pro_default_feed_rules( $rules = [] ) {
+	public
+	static function default_feed_rules(
+		$rules = []
+	) {
 		$defaults = array(
 			'provider'              => '',
 			'feed_country'          => '',
@@ -1160,28 +1216,29 @@ class Config {// phpcs:ignore
 			'limit'                 => array(), // limit or command
 			// filters tab
 			'composite_price'       => 'all_product_price',
-			'product_ids'           => '',
+			'product_ids'           => array(),
 			'categories'            => array(),
 			'post_status'           => array( 'publish' ),
 			'filter_mode'           => array(),
 			'campaign_parameters'   => array(),
-			'is_outOfStock'         => 'n',
-			'is_backorder'          => 'n',
-			'is_emptyDescription'   => 'n',
-			'is_emptyImage'         => 'n',
-			'is_emptyPrice'         => 'n',
-			'product_visibility'    => 0,
+			'is_outOfStock'         => false,
+			'is_backorder'          => false,
+			'is_emptyDescription'   => false,
+			'is_emptyImage'         => false,
+			'is_emptyPrice'         => false,
+			'product_visibility'    => false,
 			// include hidden ? 1 yes 0 no
-			'outofstock_visibility' => 0,
+			'outofstock_visibility' => false,
 			// override wc global option for out-of-stock product hidden from catalog? 1 yes 0 no
 			'ptitle_show'           => '',
 			'decimal_separator'     => wc_get_price_decimal_separator(),
 			'thousand_separator'    => wc_get_price_thousand_separator(),
 			'decimals'              => wc_get_price_decimals(),
 		);
-		$rules    = wp_parse_args( $rules, $defaults );
 
-		return apply_filters( 'woo_feed_pro_default_feed_rules', $rules );
+		$rules = wp_parse_args( $rules, $defaults );
+
+		return apply_filters( 'woo_feed_default_feed_rules', $rules );
 	}
 
 }

@@ -53,7 +53,12 @@ class Shipping {
 	 */
 	protected function get_shipping_zones( $type ) {
 		$shippingInfo = Cache::get( 'ctx_feed_shipping_info' );
-		if ( ! $shippingInfo ) {
+        if( !empty ($shippingInfo) ) {
+            foreach ($shippingInfo as $key => $info) {
+                $shippingInfo[$key]['price'] = $this->get_shipping_price($info);
+            }
+        }
+        if ( ! $shippingInfo ) {
 			$zones = WC_Shipping_Zones::get_zones('json');
 			if ( ! empty( $zones ) ) {
 				foreach ( $zones as $zone ) {
@@ -124,7 +129,6 @@ class Shipping {
 	private function get_methods() {
 		if ( ! empty( $this->methods ) ) {
 			foreach ( $this->methods as $method ) {
-
 				if ( 'yes' === $method->enabled) {
 
 					if ( empty( $this->country ) ) {
@@ -149,7 +153,7 @@ class Shipping {
 					$this->shipping[ $this->l ]['method_title']      = $method->title;
 					$this->shipping[ $this->l ]['method_min_amount'] = isset( $method->min_amount ) ? $method->min_amount : "";
 					$this->shipping[ $this->l ]['price']             = $this->get_shipping_price( $this->shipping[ $this->l ] );
-					$this->l ++;
+                    $this->l ++;
 				}
 			}
 		}

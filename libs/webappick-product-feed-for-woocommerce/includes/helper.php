@@ -435,6 +435,8 @@ if ( ! function_exists( 'woo_feed_progress_bar' ) ) {
 	 */
 	function woo_feed_progress_bar() {
 		$progress_bar = '';
+
+		return $progress_bar;
 		ob_start();
 		?>
 		<div id="feed_progress_table" style="display: none;">

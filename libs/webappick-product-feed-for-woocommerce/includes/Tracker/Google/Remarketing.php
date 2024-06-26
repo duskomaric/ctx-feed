@@ -164,19 +164,21 @@ class Remarketing extends Base{
      * @since 4.4.34
      */
     public function product_add_to_cart_data(){
+		$data = [];
+		if( isset( $_POST['product_id'] ) ){
+			$product_id = intval( esc_attr( $_POST['product_id'] ) );
+			$_product = wc_get_product( $product_id );
 
-        $product_id = intval( esc_attr( $_POST['product_id'] ) );
-        $_product = wc_get_product( $product_id );
-
-        $data = [
-            'send_to' => $this->send_to,
-            'value'   => $_product->get_price(),
-            'items'   => [
-                [
-                    'id' => $_product->get_ID(),
-                ],
-            ],
-        ];
+			$data = [
+				'send_to' => $this->send_to,
+				'value'   => $_product->get_price(),
+				'items'   => [
+					[
+						'id' => $_product->get_ID(),
+					],
+				],
+			];
+		}
 
         wp_send_json_success( json_encode( $data ) );
     }

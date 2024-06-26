@@ -35,17 +35,37 @@ class GooglereviewStructure {
 	private $ids;
 
 	/**
+	 * Review limit.
+	 *
+	 * @var int $limit
+	 */
+	private $review_limit;
+
+	/**
 	 * Constructor for GooglereviewStructure.
 	 *
 	 * @param mixed $config Configuration settings.
 	 * @param array $ids Product ids.
 	 */
-
 	public function __construct( $config, $ids ) {
 		$this->config = $config;
 		$this->ids = $ids;
 		$this->config->itemWrapper  = 'review';
 		$this->config->itemsWrapper = 'reviews';
+		$this->review_limit = $this->get_review_limit_per_product();
+	}
+
+	/**
+	 * Retrieve the review limit.
+	 *
+	 * This function returns the review limit, which is filtered by 'get_review_limit'.
+	 * If the filter is not applied, the default limit of 0 is returned.
+	 *
+	 * @return int The review limit.
+	 */
+	public function get_review_limit_per_product(){
+		$limit = 0;
+		return apply_filters( 'woo_feed_get_review_limit_per_product', $limit );
 	}
 
 	/**
@@ -66,15 +86,20 @@ class GooglereviewStructure {
 				continue;
 			}
 
-			$reviews = \get_comments(
-				array(
-					'post_id'     => $id,
-					'status'      => 'approve',
-					'post_status' => 'publish',
-					'post_type'   => 'product',
-					'parent'      => 0
-				)
+			$args = array(
+				'post_id'     => $id,
+				'status'      => 'approve',
+				'post_status' => 'publish',
+				'post_type'   => 'product',
+				'parent'      => 0
 			);
+			if( $this->review_limit > 0 ){
+				$args['number'] = $this->review_limit;
+				$args['orderby'] = 'comment_date';
+				$args['order'] = 'DESC';
+			}
+
+			$reviews = \get_comments( $args );
 			$i      = 0;
 			if ( $reviews && \is_array( $reviews ) ) {
 				foreach ( $reviews as $single_review ) {

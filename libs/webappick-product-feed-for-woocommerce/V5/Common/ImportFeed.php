@@ -87,9 +87,10 @@ class ImportFeed {
 				$feed['feedType'],
 				$feed['provider'] );
 			// save config.
+			$opt_name = "wf_feed_$opt_name";
 			$fileName = FeedHelper::save_feed_config_data( $feed, $opt_name, false );
 
-			$newFeedConfig['option_name'] = "wf_feed_$opt_name";
+			$newFeedConfig['option_name'] = $opt_name;
 			$newFeedConfig['option_value']['feedrules'] = $feed;
 
 			$status = FeedHelper::generate_feed( $newFeedConfig );

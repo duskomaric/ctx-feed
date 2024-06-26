@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 
-/*! tailwindcss v3.3.3 | MIT License | https://tailwindcss.com */
+/*! tailwindcss v3.4.1 | MIT License | https://tailwindcss.com */
 
 /*
 1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
@@ -32,9 +32,11 @@
 4. Use the user's configured `sans` font-family by default.
 5. Use the user's configured `sans` font-feature-settings by default.
 6. Use the user's configured `sans` font-variation-settings by default.
+7. Disable tap highlights on iOS
 */
 
-html {
+html,
+:host {
   line-height: 1.5;
   /* 1 */
   -webkit-text-size-adjust: 100%;
@@ -44,13 +46,15 @@ html {
   -o-tab-size: 4;
      tab-size: 4;
   /* 3 */
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   /* 4 */
   -webkit-font-feature-settings: normal;
           font-feature-settings: normal;
   /* 5 */
   font-variation-settings: normal;
   /* 6 */
+  -webkit-tap-highlight-color: transparent;
+  /* 7 */
 }
 
 /*
@@ -122,8 +126,10 @@ strong {
 }
 
 /*
-1. Use the user's configured `mono` font family by default.
-2. Correct the odd `em` font sizing in all browsers.
+1. Use the user's configured `mono` font-family by default.
+2. Use the user's configured `mono` font-feature-settings by default.
+3. Use the user's configured `mono` font-variation-settings by default.
+4. Correct the odd `em` font sizing in all browsers.
 */
 
 code,
@@ -132,8 +138,13 @@ samp,
 pre {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   /* 1 */
-  font-size: 1em;
+  -webkit-font-feature-settings: normal;
+          font-feature-settings: normal;
   /* 2 */
+  font-variation-settings: normal;
+  /* 3 */
+  font-size: 1em;
+  /* 4 */
 }
 
 /*
@@ -2121,6 +2132,10 @@ input[type="checkbox"]:focus,
   border-left-width: 4px;
 }
 
+.ctx-border-r {
+  border-right-width: 1px;
+}
+
 .ctx-border-r-0 {
   border-right-width: 0px;
 }
@@ -2417,6 +2432,10 @@ input[type="checkbox"]:focus,
 
 .\!ctx-p-0 {
   padding: 0px !important;
+}
+
+.ctx-p-1 {
+  padding: 0.25rem;
 }
 
 .ctx-p-2 {
@@ -3295,6 +3314,36 @@ img {
   vertical-align: unset;
 }
 
+.ctx-removable-item {
+  background: #f2f9fc;
+  border: 1px solid #c9e6f2;
+  border-radius: 2px;
+  color: #08c;
+  display: inline-block;
+  margin: 2px;
+  vertical-align: middle;
+}
+
+.ctx-removable-item span:first-child {
+  border-right: 1px solid #c9e6f2;
+  cursor: pointer;
+  padding: 2px 5px 4px;
+}
+
+.ctx-removable-item span {
+  display: inline-block;
+  vertical-align: top;
+  border-right: 2px solid #c9e6f2;
+}
+
+.ctx-removable-item p {
+  margin-right: 4px;
+  vertical-align: sub;
+  width: 24px;
+  display: inline-block;
+  padding-left: 7px;
+}
+
 .marker\:ctx-text-gray-500 *::marker {
   color: rgb(107 114 128 );
 }
@@ -3626,28 +3675,6 @@ img {
   opacity: 1;
 }
 
-@media (prefers-color-scheme: dark) {
-  .dark\:ctx-bg-gray-700 {
-    --tw-bg-opacity: 1;
-    background-color: rgb(55 65 81 / var(--tw-bg-opacity));
-  }
-
-  .dark\:ctx-bg-slate-700 {
-    --tw-bg-opacity: 1;
-    background-color: rgb(51 65 85 / var(--tw-bg-opacity));
-  }
-
-  .dark\:ctx-text-gray-400 {
-    --tw-text-opacity: 1;
-    color: rgb(156 163 175 / var(--tw-text-opacity));
-  }
-
-  .dark\:ctx-text-white {
-    --tw-text-opacity: 1;
-    color: rgb(255 255 255 / var(--tw-text-opacity));
-  }
-}
-
 @media (min-width: 640px) {
   .sm\:ctx-order-3 {
     -ms-flex-order: 3;
@@ -3891,6 +3918,10 @@ img {
         align-items: center;
   }
 
+  .sm\:ctx-gap-1 {
+    gap: 0.25rem;
+  }
+
   .sm\:ctx-gap-4 {
     gap: 1rem;
   }
@@ -4050,6 +4081,10 @@ img {
     margin-right: 0.25rem;
   }
 
+  .lg\:ctx-mr-10 {
+    margin-right: 2.5rem;
+  }
+
   .lg\:ctx-mt-0 {
     margin-top: 0px;
   }
@@ -4072,6 +4107,10 @@ img {
 
   .lg\:ctx-w-28 {
     width: 7rem;
+  }
+
+  .lg\:ctx-w-32 {
+    width: 8rem;
   }
 
   .lg\:ctx-w-40 {
@@ -4243,7 +4282,7 @@ img {
   }
 
   .xl\:ctx-max-w-0 {
-    max-width: 0rem;
+    max-width: 0px;
   }
 
   .xl\:ctx-max-w-\[170px\] {
@@ -4656,6 +4695,28 @@ img {
 
   .ctx-group\/item:hover .\33xl\:group-hover\/item\:ctx-invisible {
     visibility: hidden;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .dark\:ctx-bg-gray-700 {
+    --tw-bg-opacity: 1;
+    background-color: rgb(55 65 81 / var(--tw-bg-opacity));
+  }
+
+  .dark\:ctx-bg-slate-700 {
+    --tw-bg-opacity: 1;
+    background-color: rgb(51 65 85 / var(--tw-bg-opacity));
+  }
+
+  .dark\:ctx-text-gray-400 {
+    --tw-text-opacity: 1;
+    color: rgb(156 163 175 / var(--tw-text-opacity));
+  }
+
+  .dark\:ctx-text-white {
+    --tw-text-opacity: 1;
+    color: rgb(255 255 255 / var(--tw-text-opacity));
   }
 }
 

@@ -144,6 +144,7 @@ class FeedHelper {
 
 		$feed_url = self::get_file_url( $feed_option_name, $feed_rules['provider'], $feed_rules['feedType'] );
 
+		// Modify feed rules before save to database.
 		$feed_rules = apply_filters( 'woo_feed_insert_feed_data', $feed_rules, $old_feed, $feed_option_name );
 
 		$feed_rulesToSave = [
@@ -275,17 +276,13 @@ class FeedHelper {
 	 *
 	 * @return mixed|null
 	 */
-	private static function parse_feed_rules( $rules = array(), $context = 'view' ) {
+	public static function parse_feed_rules( $rules = array(), $context = 'view' ) {
 
 		if ( empty( $rules ) ) {
 			$rules = array();
 		}
 
-		if ( Helper::is_pro() ) {
-			$defaults = Config::pro_default_feed_rules();
-		} else {
-			$defaults = Config::free_default_feed_rules();
-		}
+		$defaults = Config::default_feed_rules();
 
 		$rules                = wp_parse_args( $rules, $defaults );
 		$rules['filter_mode'] = wp_parse_args(
@@ -456,7 +453,88 @@ class FeedHelper {
 			'thousand_separator'    => wc_get_price_thousand_separator(),
 			'decimals'              => wc_get_price_decimals(),
 		);
-		$rules    = wp_parse_args( $rules, $defaults );
+//		$defaults = [
+//			"provider"              => "",
+//			"feed_country"          => "",
+//			"filename"              => "",
+//			"feedType"              => "xml",
+//			"ftpenabled"            => false,
+//			"ftporsftp"             => "ftp",
+//			"ftphost"               => "",
+//			"ftpport"               => "21",
+//			"ftpuser"               => "",
+//			"ftppassword"           => "",
+//			"ftppath"               => "",
+//			"ftpmode"               => "active",
+//			"is_variations"         => "y",
+//			"variable_price"        => "first",
+//			"variable_quantity"     => "first",
+//			'feedLanguage'          => apply_filters( 'wpml_current_language', null ),
+//			'feedCurrency'          => get_woocommerce_currency(),
+//			"itemsWrapper"          => "products",
+//			"itemWrapper"           => "product",
+//			"delimiter"             => ",",
+//			"enclosure"             => "double",
+//			"extraHeader"           => "",
+//			"vendors"               => [],
+//			"mattributes"           => [],
+//			"prefix"                => [],
+//			"type"                  => [],
+//			"attributes"            => [],
+//			"default"               => [],
+//			"suffix"                => [],
+//			"output_type"           => [],
+//			"limit"                 => [],
+//			"composite_price"       => "all_product_price",
+//			"product_ids"           => [],
+//			"categories"            => [],
+//			"post_status"           => ["publish"],
+//			"filter_mode"           => [
+//				"product_ids" => "include",
+//				"categories"  => "include",
+//				"post_status" => "include"
+//			],
+//			"campaign_parameters"   => [
+//				"utm_source"   => "",
+//				"utm_medium"   => "",
+//				"utm_campaign" => "",
+//				"utm_term"     => "",
+//				"utm_content"  => ""
+//			],
+//			"is_outOfStock"         => false,
+//			"is_backorder"          => false,
+//			"is_emptyDescription"   => false,
+//			"is_emptyImage"         => false,
+//			"is_emptyPrice"         => false,
+//			"product_visibility"    => false,
+//			"outofstock_visibility" => false,
+//			"ptitle_show"           => "",
+//			'decimal_separator'     => wc_get_price_decimal_separator(),
+//			'thousand_separator'    => wc_get_price_thousand_separator(),
+//			'decimals'              => wc_get_price_decimals(),
+//			"feed_option_name"      => "",
+//			"feed_id"               => "",
+//			"meta-box-order-nonce"  => "",
+//			"shipping_country"      => "",
+//			"tax_country"           => "",
+//			"str_replace"           => [
+//				[
+//					"subject" => "",
+//					"search"  => "",
+//					"replace" => ""
+//				]
+//			],
+//			"concatType"            => [],
+//			"fattribute"            => [],
+//			"condition"             => [],
+//			"filterCompare"         => [],
+//			"wf_tabs"               => true,
+//			"option_id"             => "",
+//			"option_name"           => ""
+//		];
+
+		$rules = wp_parse_args( $rules, $defaults );
+
 
 		return apply_filters( 'woo_feed_pro_default_feed_rules', $rules );
 	}
@@ -469,11 +547,11 @@ class FeedHelper {
 	 * @return void|\WP_Error|\WP_REST_Response
 	 */
 	public static function prepare_item_for_response( $item ) {
-
+		$actual_value_from_db = $item;
 		if ( isset( $item['option_value'] ) ) {
 			$item['option_value'] = maybe_unserialize( maybe_unserialize( $item['option_value'] ) );
 
-			return $item;
+			return apply_filters( 'woo_feed_prepare_item_for_response', $item, $actual_value_from_db );
 		} else {
 			$item['option_value'] = maybe_unserialize( get_option( $item['option_name'] ) );
 		}
@@ -486,7 +564,7 @@ class FeedHelper {
 			$item['option_value']['status'] = false;
 		}
 
-		return $item;
+		return apply_filters( 'woo_feed_prepare_item_for_response', $item, $actual_value_from_db );
 	}
 
 	/**
@@ -500,6 +578,14 @@ class FeedHelper {
 
 		foreach ( $feed_lists as $feed ) {
 			$item = self::prepare_item_for_response( $feed );
+			// Skip invalid feed structure
+			if ( ! self::validate_feed_structure( $item ) ) {
+				continue;
+			}
+			if ( apply_filters( 'woo_feed_should_apply_validate_feed_structure', false ) && ! self::validate_feed_structure( $item, 'full' ) ) {
+				continue;
+			}
+
 			if ( $status ) {
 				if ( \is_object( $item['option_value'] ) ) {
 					$lists[] = $item;
@@ -516,8 +602,156 @@ class FeedHelper {
 			}
 		}
 
-		return $lists;
+		// Modify the feed list before returning.
+		return apply_filters( 'woo_feed_prepare_all_feeds', $lists, $feed_lists, $status );
 	}
+
+
+	/**
+	 * Validates the structure of a feed option.
+	 *
+	 * @param $feed
+	 * @param $validation_type
+	 *
+	 * @return bool
+	 */
+	public static function validate_feed_structure( $feed, $validation_type = 'partial' ) {
+		// Define the nested structure of required keys
+		$required_structure = [
+			'option_id'    => 'scalar',
+			'option_name'  => 'scalar',
+			'option_value' => [
+				'feedrules'    => [
+					'provider'              => 'scalar',
+					'feed_country'          => 'scalar',
+					'filename'              => 'scalar',
+					'feedType'              => 'scalar',
+					'ftpenabled'            => 'scalar',
+					'ftporsftp'             => 'scalar',
+					'ftphost'               => 'scalar',
+					'ftpport'               => 'scalar',
+					'ftpuser'               => 'scalar',
+					'ftppassword'           => 'scalar',
+					'ftppath'               => 'scalar',
+					'ftpmode'               => 'scalar',
+					'is_variations'         => 'scalar',
+					'variable_price'        => 'scalar',
+					'variable_quantity'     => 'scalar',
+					'feedLanguage'          => 'scalar',
+					'feedCurrency'          => 'scalar',
+					'itemsWrapper'          => 'scalar',
+					'itemWrapper'           => 'scalar',
+					'delimiter'             => 'scalar',
+					'enclosure'             => 'scalar',
+					'extraHeader'           => 'scalar',
+					'vendors'               => 'array',
+					'mattributes'           => 'array',
+					'prefix'                => 'array',
+					'type'                  => 'array',
+					'attributes'            => 'array',
+					'default'               => 'array',
+					'suffix'                => 'array',
+					'output_type'           => 'array',
+					'limit'                 => 'array',
+					'composite_price'       => 'scalar',
+					'product_ids'           => 'array',
+					'categories'            => 'array',
+					'post_status'           => 'array',
+					'filter_mode'           => [
+						'product_ids' => 'scalar',
+						'categories'  => 'scalar',
+						'post_status' => 'scalar',
+					],
+					'campaign_parameters'   => [
+						'utm_source'   => 'scalar',
+						'utm_medium'   => 'scalar',
+						'utm_campaign' => 'scalar',
+						'utm_term'     => 'scalar',
+						'utm_content'  => 'scalar',
+					],
+					'is_outOfStock'         => 'scalar',
+					'is_backorder'          => 'scalar',
+					'is_emptyDescription'   => 'scalar',
+					'is_emptyImage'         => 'scalar',
+					'is_emptyPrice'         => 'scalar',
+					'product_visibility'    => 'scalar',
+					'outofstock_visibility' => 'scalar',
+					'ptitle_show'           => 'scalar',
+					'decimal_separator'     => 'scalar',
+					'thousand_separator'    => 'scalar',
+					'decimals'              => 'scalar',
+					'feed_option_name'      => 'scalar',
+					'feed_id'               => 'scalar',
+					'meta-box-order-nonce'  => 'scalar',
+					'shipping_country'      => 'scalar',
+					'tax_country'           => 'scalar',
+					'str_replace'           => 'array',
+					'concatType'            => 'array',
+					'fattribute'            => 'array',
+					'condition'             => 'array',
+					'filterCompare'         => 'array',
+					'wf_tabs'               => 'scalar',
+				],
+				'url'          => 'scalar',
+				'last_updated' => 'scalar',
+				'status'       => 'scalar',
+			],
+			'autoload'     => 'scalar',
+		];
+		$is_valid = false;
+		if( $validation_type == 'partial' ) {
+			if(isset($feed['option_value'], $feed['option_name'],$feed['option_value']['feedrules'], $feed['option_value']['feedrules']['provider'], $feed['option_value']['feedrules']['feedType'] ) && $feed['option_value']['feedrules']['provider'] && $feed['option_value']['feedrules']['feedType'] ) {
+				$is_valid = true;
+			}
+		}else{
+			$is_valid =  self::validate_structure( $feed, $required_structure );
+		}
+
+
+
+		return apply_filters( 'woo_feed_validate_feed_structure', $is_valid, $feed, $required_structure );
+	}
+
+	/**
+	 * Validates the structure of a feed option.
+	 *
+	 * @param $array
+	 * @param $required_structure
+	 *
+	 * @return bool
+	 */
+	private static function validate_structure( $array, $required_structure ) {
+		$is_valid = true;
+		foreach ( $required_structure as $key => $value ) {
+			if ( ! array_key_exists( $key, $array ) ) {
+				// Key is missing
+				$is_valid = false;
+				break;
+			}
+			if ( is_array( $value ) ) {
+				if ( ! is_array( $array[ $key ] ) ) {
+					// Expected an array, found something else
+					$is_valid = false;
+					break;
+				}
+				// Recursive check for nested structure
+				$valid = self::validate_structure( $array[ $key ], $value );
+				if ( ! $valid ) {
+					$is_valid = false;
+					break;
+				}
+			} else {
+				if ( $value === 'scalar' && is_array( $array[ $key ] ) ) {
+					// Expected a scalar value, found an array
+					$is_valid = false;
+					break;
+				}
+			}
+		}
+
+		return $is_valid;
+	}
+
 
 	/**
 	 * Removes predefined prefixes from a feed option name and returns the resulting slug.
@@ -550,7 +784,7 @@ class FeedHelper {
 				DAY_IN_SECONDS         => esc_html__( '24 Hours', 'woo-feed' ),
 				12 * HOUR_IN_SECONDS   => esc_html__( '12 Hours', 'woo-feed' ),
 				6 * HOUR_IN_SECONDS    => esc_html__( '6 Hours', 'woo-feed' ),
-				HOUR_IN_SECONDS        => esc_html__( '1 Hours', 'woo-feed' ),
+				HOUR_IN_SECONDS        => esc_html__( '1 Hour', 'woo-feed' ),
 				30 * MINUTE_IN_SECONDS => esc_html__( '30 Minutes', 'woo-feed' ),
 				15 * MINUTE_IN_SECONDS => esc_html__( '15 Minutes', 'woo-feed' ),
 				5 * MINUTE_IN_SECONDS  => esc_html__( '5 Minutes', 'woo-feed' )
@@ -561,7 +795,7 @@ class FeedHelper {
 				DAY_IN_SECONDS       => esc_html__( '24 Hours', 'woo-feed' ),
 				12 * HOUR_IN_SECONDS => esc_html__( '12 Hours', 'woo-feed' ),
 				6 * HOUR_IN_SECONDS  => esc_html__( '6 Hours', 'woo-feed' ),
-				HOUR_IN_SECONDS      => esc_html__( '1 Hours', 'woo-feed' ),
+				HOUR_IN_SECONDS      => esc_html__( '1 Hour', 'woo-feed' ),
 			);
 		}
 
@@ -648,6 +882,33 @@ class FeedHelper {
 			}
 		}
 	}
+
+
+	/**
+	 * Removes temporary feed files based on the given configuration and file name.
+	 *
+	 * @param array $config Feed configuration data.
+	 * @param string $file_name The name of the feed file.
+	 * @param bool $auto Flag indicating whether the process is automatic.
+	 *
+	 * @return void
+	 */
+	public static function unlink_temporary_cron_files( $path, $option_name, $files = [] ) {
+		if ( empty( $files ) || ! \is_string( $option_name ) ) {
+			// Handle invalid input.
+			return;
+		}
+
+		foreach ( $files as $file ) {
+			$temp_file_name = $path . '/' . $file;
+
+			if ( \file_exists( $temp_file_name ) ) {
+				\unlink( $temp_file_name ); // Consider adding error handling here.
+			}
+
+		}
+	}
+
 
 	/**
 	 * Saves a batch chunk of feed information to a file.
@@ -807,6 +1068,25 @@ class FeedHelper {
 		return $ids;
 	}
 
+	private static function should_create_header_footer( $path, $feed_name, $file_type, $auto_update ) {
+		$should_create_header_footer = false;
+
+		$temp_feed_header_name = $auto_update ? AttributeValueByType::AUTO_FEED_TEMP_HEADER_PREFIX : AttributeValueByType::FEED_TEMP_HEADER_PREFIX;
+		$temp_feed_footer_name = $auto_update ? AttributeValueByType::AUTO_FEED_TEMP_FOOTER_PREFIX : AttributeValueByType::FEED_TEMP_FOOTER_PREFIX;
+		$temp_feed_header_name .= $feed_name . $file_type;
+		$temp_feed_footer_name .= $feed_name . $file_type;
+
+		if ( ! file_exists( $path . '/' . $temp_feed_header_name ) ) {
+			$should_create_header_footer = true;
+		}
+
+		if ( ! file_exists( $path . '/' . $temp_feed_footer_name ) && self::should_create_footer( $file_type ) ) {
+			$should_create_header_footer = true;
+		}
+
+		return $should_create_header_footer;
+	}
+
 	/**
 	 * @param $feed_info
 	 * @param $product_ids
@@ -831,11 +1111,14 @@ class FeedHelper {
 			if ( $offset === 0 ) {
 				self::unlink_temporary_files( $feed_rules, $feed_rules['filename'], $auto );
 			}
+			$path = Helper::get_file_dir( $provider, $file_ext_type );
+
 			$feed_template = TemplateFactory::make_feed( $product_ids, $config );
 			//Generate Header footer
 			// TODO: call this function only when offset is 0. But when creating the new feed 0 is calling 2 times. and not generating the header footer.
-			self::generate_header_footer( $feed_template, $file_ext_type, $feed_name, $feed_rules, $provider );
-
+			if ( self::should_create_header_footer( $path, $feed_name, $file_ext_type, $auto ) ) {
+				self::generate_header_footer( $feed_template, $file_ext_type, $feed_name, $feed_rules, $provider, $auto );
+			}
 
 			$current_feed = $feed_template->get_feed();
 			woo_feed_log_feed_process( $feed_rules['filename'], sprintf( 'Initializing merchant Class %s for %s', $provider, $provider ) );
@@ -844,7 +1127,9 @@ class FeedHelper {
 				//$temp_feed_body_name = AttributeValueByType::AUTO_FEED_TEMP_BODY_PREFIX . $feed_name;
 				$temp_feed_body_prefix = self::get_feed_body_temp_prefix( $auto );
 				$temp_feed_body_name   = $temp_feed_body_prefix . $feed_name;
-				$previous_feed         = self::get_batch_feed_info( $provider, $file_ext_type, $temp_feed_body_name );
+
+				$previous_feed = self::get_batch_feed_info( $provider, $file_ext_type, $temp_feed_body_name );
+
 				// Has previous feed body.
 				if ( $previous_feed ) {
 					/**
@@ -878,9 +1163,184 @@ class FeedHelper {
 		return $status;
 	}
 
+	private static function get_re_indexed_files( $files ) {
+
+		$header_index = null;
+		$footer_index = null;
+		$header_value = '';
+		$footer_value = '';
+		// Find header and footer indices
+		foreach ( $files as $key => $value ) {
+			if ( strpos( $value, 'header' ) !== false ) {
+				$header_index = $key;
+			}
+			if ( strpos( $value, 'footer' ) !== false ) {
+				$footer_index = $key;
+			}
+		}
+
+		// Move header to the first position if it exists
+		if ( isset( $files[ $header_index ] ) && $header_index !== null ) {
+			$header_value = $files[ $header_index ];
+			unset( $files[ $header_index ] );
+		}
+
+		// Move footer to the last position if it exists
+		if ( isset( $files[ $footer_index ] ) && $footer_index !== null ) {
+			$footer_value = $files[ $footer_index ];
+			unset( $files[ $footer_index ] );
+		}
+
+
+		if ( ! empty( $header_value ) ) {
+			array_unshift( $files, $header_value );
+		}
+		if ( ! empty( $footer_value ) ) {
+			array_push( $files, $footer_value );
+		}
+
+
+		return array_values( $files );
+	}
+
+
+	/**
+	 * @param $path
+	 * @param $option_name
+	 * @param $feed_type_ext
+	 *
+	 * @return array
+	 */
+	private static function get_re_indexed_and_valid_files( $path, $option_name, $feed_type_ext ) {
+
+		// get all batched files and merge them. and save them in one file to extension type folder.
+		// Read files in the directory
+		$files = scandir( $path );
+
+		// Filter out '.' and '..' (current and parent directory entries)
+		$files = array_diff( $files, array( '.', '..' ) );
+
+
+		$valid_files = [];
+		// Find header and footer indices
+		foreach ( $files as $key => $file ) {
+
+			if ( strpos( $file, $feed_type_ext ) === false || strpos( $file, $option_name ) === false || empty( $file ) ) {
+				continue;
+			}
+
+			if ( strpos( $file, 'header' ) !== false && strpos( $file, AttributeValueByType::AUTO_FEED_TEMP_HEADER_PREFIX ) !== false ) {
+				$valid_files[] = $file;
+				continue;
+			}
+
+			if ( strpos( $file, 'footer' ) !== false && strpos( $file, AttributeValueByType::AUTO_FEED_TEMP_FOOTER_PREFIX ) !== false ) {
+				$valid_files[] = $file;
+				continue;
+			}
+
+			if ( strpos( $file, AttributeValueByType::AUTO_FEED_TEMP_BODY_PREFIX ) === false ) {
+				continue;
+			}
+
+			$valid_files[] = $file;
+
+		}
+
+		$get_re_indexed_files = self::get_re_indexed_files( $valid_files );
+
+		return $get_re_indexed_files;
+	}
+
+
 	/**
 	 * @param $feed_info
 	 * @param $should_update_last_update_time
+	 *
+	 * <<<<<<< HEAD
+	 * =======
+	 *
+	 * @return array
+	 */
+	public static function save_cron_batched_feed_files( $feed_info, $should_update_last_update_time = false, $auto = true ) {
+		$option_name_orginal = $feed_info['option_name'];
+		$provider            = $feed_info['option_value']['feedrules']['provider'];
+		$feed_type_ext       = $feed_info['option_value']['feedrules']['feedType'];
+
+		$path        = Helper::get_file_dir( $provider, $feed_type_ext );
+		$option_name = Helper::extract_feed_option_name( $option_name_orginal );
+		$feed_url    = Helper::get_file_url( $option_name, $provider, $feed_type_ext );
+		$contents    = '';
+
+		$files = self::get_re_indexed_and_valid_files( $path, $option_name, $feed_type_ext );
+
+		foreach ( $files as $file ) {
+			$temp_content = FileSystem::ReadFile( $path, $file );
+			// If there is a problem regarding file system or other.
+			if ( is_wp_error( $temp_content ) ) {
+				continue;
+			}
+
+			if ( self::should_json_decode( $feed_type_ext ) ) {
+				$temp_content = \json_decode( $temp_content, true );
+				if ( \is_array( $temp_content ) || 'json' === $feed_type_ext ) { // json, csv fil
+					$temp_contents = $contents ? $contents : [];
+					$temp_content  = $temp_content ? $temp_content : [];
+					$contents      = \array_merge( $temp_contents, $temp_content );
+				} else {
+					$contents .= $temp_content;
+				}
+			} else {
+				$contents .= $temp_content;
+			}
+		}
+
+
+		$file_name = $option_name . '.' . $feed_type_ext;
+
+		if ( is_array( $contents ) ) { // file type json, csv
+			$contents = wp_json_encode( $contents );
+			$status   = FileSystem::WriteFile( $contents, $path, $file_name );
+		}else if ( $contents ) {
+			$status = FileSystem::WriteFile( $contents, $path, $file_name );
+		} else {
+			$status = false;
+		}
+
+		// Upload ftp/sftp if enabled.
+		self::upload_feed_file_to_ftp_server( $feed_info, $path, $file_name );
+
+		// Remove temporary files.
+		self::unlink_temporary_cron_files( $path, $option_name, $files );
+
+		// Delete temporary cache data.
+		Cache::delete( 'wad_discounts' );
+
+		if ( ! isset( $feed_info['option_value']['url'] ) ) {
+			$feed_info['option_value']['url'] = Helper::get_file_url( $feed_info['option_name'], $feed_info['option_value']['feedrules']['provider'], $feed_info['option_value']['feedrules']['feedType'] );
+		}
+
+		if ( ! isset( $feed_info['option_value']['status'] ) ) {
+			$feed_info['option_value']['status'] = false;
+		}
+
+		if ( $should_update_last_update_time ) {
+			$feed_info['option_value']['last_updated'] = \date( 'Y-m-d H:i:s', \strtotime( \current_time( 'mysql' ) ) );
+			update_option( $option_name_orginal, $feed_info['option_value'] );
+		}
+
+		return [
+			'status'   => $status,
+			'feed_url' => $feed_url,
+		];
+
+	}
+
+	/**
+	 * @param $feed_info
+	 * @param $should_update_last_update_time
+	 *
+	 * >>>>>>> feature/CV-79
 	 *
 	 * @return array
 	 */
@@ -946,7 +1406,6 @@ class FeedHelper {
 
 		$file_name = $option_name . '.' . $feed_type_ext;
 
-
 		if ( is_array( $contents ) ) { // file type json, csv
 			$contents = wp_json_encode( $contents );
 			$status   = FileSystem::WriteFile( $contents, $path, $file_name );
@@ -977,6 +1436,8 @@ class FeedHelper {
 		}
 
 		delete_transient( 'ctx_feed_structure_transient' );
+
+		do_action('ctx_feed_after_save_feed_file', $status, $feed_info, $should_update_last_update_time, $auto );
 
 		return [
 			'status'   => $status,
@@ -1129,12 +1590,12 @@ class FeedHelper {
 	 *
 	 * @return void
 	 */
-	public static function generate_header_footer( $feed_template, $file_ext_type, $feed_name, $feed_rules, $provider ) {
+	public static function generate_header_footer( $feed_template, $file_ext_type, $feed_name, $feed_rules, $provider, $auto_update = false ) {
 		$feed_header = $feed_template->get_header();
 		$feed_footer = $feed_template->get_footer();
 
-		$temp_feed_header_name = AttributeValueByType::FEED_TEMP_HEADER_PREFIX . $feed_name;
-		$temp_feed_footer_name = AttributeValueByType::FEED_TEMP_FOOTER_PREFIX . $feed_name;
+		$temp_feed_header_name = $auto_update ? AttributeValueByType::AUTO_FEED_TEMP_HEADER_PREFIX . $feed_name : AttributeValueByType::FEED_TEMP_HEADER_PREFIX . $feed_name;
+		$temp_feed_footer_name = $auto_update ? AttributeValueByType::AUTO_FEED_TEMP_FOOTER_PREFIX . $feed_name : AttributeValueByType::FEED_TEMP_FOOTER_PREFIX . $feed_name;
 		// TODO: should generate footer when template type is csv ?
 		self::save_batch_feed_info( $provider, $file_ext_type, $feed_header, $temp_feed_header_name, $feed_rules );
 
@@ -1172,11 +1633,50 @@ class FeedHelper {
 			return false;
 		}
 
-		$status = self::generate_temp_feed_body( $feed_info, $ids, $offset, false, true );
+		/**
+		 * This parameter is used to check if the feed is generated by cron or not.
+		 * Even the feed is generated by cron, it will be considered as manual feed.
+		 * Because, The header, footer and body prefix is same for the manual and old cron feed.
+		 * But the new cron feed has different prefix for header, footer and body.
+		 * And this function is only called from old cron job functionality. So, it's not a new cron feed.
+		 * That's why we have to send this parameter false to generate_temp_feed_body function.
+		 *
+		 * @link: https://webappick.atlassian.net/browse/CBT-363
+		 * @since 7.3.13
+		 */
+		$is_auto_feed = false;
+
+		$status = self::generate_temp_feed_body( $feed_info, $ids, $offset, false, $is_auto_feed );
 
 		if ( $status ) {
-			self::save_feed_file( $feed_info, $should_update_last_update_time, true );
+			self::save_feed_file( $feed_info, $should_update_last_update_time, $is_auto_feed );
 		}
+
+		return $status;
+	}
+
+
+	/**
+	 * Generates a feed during a cron job.
+	 *
+	 * @param array $feed_info Feed configuration information.
+	 * @param int $offset Offset for batch processing.
+	 * @param bool $should_update_last_update_time Flag indicating whether to update the last update time.
+	 *
+	 * @return bool True if the feed generation is successful, false otherwise.
+	 */
+	public static function generate_cron_batched_feed( $feed_info, $offset = 0, $should_update_last_update_time = true, $ids = [] ) {
+		if ( ! \is_array( $feed_info ) || ! isset( $feed_info['option_value'] ) ) {
+			// Handle invalid input.
+			return false;
+		}
+
+		if ( empty( $ids ) ) {
+			// Handle the case where no product IDs are found.
+			return false;
+		}
+
+		$status = self::generate_temp_feed_body( $feed_info, $ids, $offset, false, true );
 
 		return $status;
 	}
@@ -1284,6 +1784,7 @@ class FeedHelper {
 			'product_visibility'    => false,
 			'outofstock_visibility' => false,
 			'is_emptyTitle'         => false,
+
 		);
 		$should_modify_filter = \array_keys( $should_modify_filter );
 
@@ -1323,19 +1824,27 @@ class FeedHelper {
 			return AttributeValueByType::FEED_TEMP_BODY_PREFIX;
 		}
 
-		return $auto ? AttributeValueByType::AUTO_FEED_TEMP_BODY_PREFIX : AttributeValueByType::FEED_TEMP_BODY_PREFIX;
+		$temp_feed_body_prefix = $auto ? AttributeValueByType::AUTO_FEED_TEMP_BODY_PREFIX : AttributeValueByType::FEED_TEMP_BODY_PREFIX;
+
+		return apply_filters( 'woo_feed_temp_feed_body_prefix', $temp_feed_body_prefix, $auto );
 	}
 
 	/**
 	 * @return bool
 	 */
 	public static function should_generate_feed_by_ajax() {
+
 		$should_generate_feed_by_ajax = true;
 		if ( is_plugin_active( 'polylang/polylang.php' ) ) {
 			$should_generate_feed_by_ajax = false;
 		}
 
 		if ( is_plugin_active( 'woocommerce-multilingual/wpml-woocommerce.php' ) ) {
+			$should_generate_feed_by_ajax = false;
+		}
+
+		$theme = wp_get_theme(); // gets the current theme
+		if ( 'Woodmart' == $theme->parent_theme ) {
 			$should_generate_feed_by_ajax = false;
 		}
 

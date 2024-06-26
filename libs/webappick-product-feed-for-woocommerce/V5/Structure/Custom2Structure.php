@@ -115,8 +115,15 @@ class Custom2Structure implements StructureInterface {
 					// Set Element for
 					$elements[ $i ]['for'] = $this->for_sub_loop;
 
+
 					// Get starting element
-					$elements[ $i ]['start'] = $this->remove_quotation( $element );
+					$template = $this->config->get_feed_template();
+					if( $template === 'yandex_xml' ){
+						$elements[ $i ]['start'] = $element ;
+					}else{
+						$elements[ $i ]['start'] = $this->remove_quotation( $element );
+					}
+
 					// Get ending element
 					$elements[ $i ]['end'] = FeedHelper::get_string_between( $value, '</', '>' );
 
@@ -211,7 +218,8 @@ class Custom2Structure implements StructureInterface {
 	 * @return string
 	 */
 	private function remove_quotation( $string ) {
-		$static_attribute_title = '/="[a-zA-Z0-9 ]+"/';
+		$string = stripslashes($string);
+		$static_attribute_title = '/="[a-zA-Z0-9 ]+"/';;
 		if ( preg_match( $static_attribute_title, $string ) ) {
 			return $string;
 		}else{

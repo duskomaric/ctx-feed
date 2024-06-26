@@ -1,20 +1,18 @@
 <?php
 
+use CTXFeed\Compatibility\CompatibilityFactory;
+use CTXFeed\Compatibility\JWTAuth;
+use CTXFeed\Compatibility\MultiVendor;
 use CTXFeed\V5\Common\DisplayNotices;
 use CTXFeed\V5\Common\DownloadFiles;
 use CTXFeed\V5\Common\ExportFeed;
 use CTXFeed\V5\Common\Helper;
 use CTXFeed\V5\Common\ImportFeed;
-use CTXFeed\V5\Compatibility\CompatibilityFactory;
-use CTXFeed\V5\Compatibility\DynamicDiscount;
-use CTXFeed\V5\Compatibility\JWTAuth;
-use CTXFeed\V5\Compatibility\MultiCurrency;
-use CTXFeed\V5\Compatibility\MultiVendor;
 use CTXFeed\V5\CustomFields\CustomFieldFactory;
 use CTXFeed\V5\Helper\CommonHelper;
+use CTXFeed\V5\Helper\CronHelper;
 use CTXFeed\V5\Helper\FeedHelper;
 use CTXFeed\V5\Override\OverrideFactory;
-use CTXFeed\V5\Query\QueryFactory;
 use CTXFeed\V5\Utility\Config;
 use CTXFeed\V5\Utility\Logs;
 
@@ -75,6 +73,40 @@ CustomFieldFactory::init();
 DisplayNotices::init();
 
 /**
+ * Initiate Common Override for all merchants.
+ *
+ * CTX Feed old version compatibility. Previous version of CTX Feed use to save feed config in different way.
+ * Previous version of CTX Feed use to save feed config without mandatory fields. Like : post_status, product_ids etc.
+ *
+ * This override will help to generate feed for old version of CTX Feed.
+ *
+ * Also, we can use this override to add any common filter for all merchants.
+ *
+ * @since 7.3..0
+ *
+ */
+\CTXFeed\V5\Override\CommonOverride::instance();
+
+/**
+ * We've introduced a better system to handle the cron job. You can read more about it here
+ * libs/webappick-product-feed-for-woocommerce/V5/Helper/CronHelper.php
+ * But this feature works only if the WP_CRON is enabled.
+ * That's why we've checked here if the WP_CRON is enabled or not.
+ * If WP_Cron is disabled then initialize old cron system by including the cron-helper.php file.
+ *
+ * Some users are claiming that the new cron system is not working for them. So, we've added setting to enable/disable the new cron system.
+ * When new cron system is disabled, the old cron system will be initialized.
+ *
+ * @link : https://webappick.atlassian.net/browse/CBT-363
+ *
+ * since 7.3.13
+ */
+if ( Helper::should_init_new_cron_system() ) {
+	new CronHelper();
+}
+
+
+/**
  * Get Product Ids by Query Type and Feed Name
  * Ajax Request
  *
@@ -111,7 +143,7 @@ if ( ! function_exists( 'woo_feed_get_product_information' ) ) {
 				do_action( 'before_woo_feed_get_product_information', $config );
 
 				// Get Product Ids
-				$ids = QueryFactory::get_ids( $config );
+				$ids       = FeedHelper::get_product_ids( $feed_info );
 
 				// Hook After Query Products
 				do_action( 'after_woo_feed_get_product_information', $config );

@@ -124,11 +124,25 @@ class AttributeValueByType {
 	const FEED_TEMP_HEADER_PREFIX = 'wf_store_feed_header_info_';
 
 	/**
+	 * Feed temporary file header name prefix
+	 *
+	 * @since 3.1.18
+	 */
+	const AUTO_FEED_TEMP_HEADER_PREFIX = 'wf_store_auto_feed_header_info_';
+
+	/**
 	 * Feed temporary file footer name prefix
 	 *
 	 * @since 3.1.18
 	 */
 	const FEED_TEMP_FOOTER_PREFIX = 'wf_store_feed_footer_info_';
+
+	/**
+	 * Feed temporary file footer name prefix
+	 *
+	 * @since 3.1.18
+	 */
+	const AUTO_FEED_TEMP_FOOTER_PREFIX = 'wf_store_auto_feed_footer_info_';
 
 	/**
 	 * WP Option Name
@@ -239,17 +253,19 @@ class AttributeValueByType {
 			$output = ProductHelper::get_acf_field( $this->product, $this->attribute );
 		} elseif ( false !== strpos( $this->attribute, self::PRODUCT_ATTRIBUTE_MAPPING_PREFIX ) ) {
 			//$output = ProductHelper::get_attribute_mapping( $this->product, $this->attribute, $this->merchant_attribute, $this->config );
-			$output = AttributeMapping::getMappingValue( $this->attribute, $this->merchant_attribute, $this->product, $this->config );
+			$output = AttributeMapping::getMappingValue( $this->attribute, $this->merchant_attribute, $this->product, $this->config, $this->parent_product );
 			//die($output);
 		} elseif ( false !== strpos( $this->attribute, self::PRODUCT_DYNAMIC_ATTRIBUTE_PREFIX ) ) {
 			//$output = ProductHelper::get_dynamic_attribute( $this->product, $this->attribute, $this->merchant_attribute, $this->config );
-			$output = DynamicAttributes::getDynamicAttributeValue( $this->attribute, $this->merchant_attribute, $this->product, $this->config );
+			$output = DynamicAttributes::getDynamicAttributeValue( $this->attribute, $this->merchant_attribute, $this->product, $this->config, $this->parent_product);
 		} elseif ( false !== strpos( $this->attribute, self::PRODUCT_CUSTOM_IDENTIFIER ) || woo_feed_strpos_array( array(
 				'_identifier_gtin',
 				'_identifier_ean',
 				'_identifier_mpn'
 			), $this->attribute ) ) {
+
 			$output = ProductHelper::get_custom_field( $this->attribute, $this->product, $this->config );
+
 		} elseif ( false !== strpos( $this->attribute, self::PRODUCT_ATTRIBUTE_PREFIX ) ) {
 			$this->attribute = str_replace( self::PRODUCT_ATTRIBUTE_PREFIX, '', $this->attribute );
 			$output          = ProductHelper::get_product_attribute( $this->attribute, $this->product, $this->config );
@@ -338,9 +354,9 @@ class AttributeValueByType {
 		} elseif ( strpos( $this->attribute, self::PRODUCT_ACF_FIELDS ) !== false ) {
 			$output = ProductHelper::get_acf_field( $this->product, $this->attribute );
 		} elseif ( strpos( $this->attribute, self::PRODUCT_ATTRIBUTE_MAPPING_PREFIX ) !== false ) {
-			$output = AttributeMapping::getMappingValue( $this->attribute, $this->merchant_attribute, $this->product, $this->config );
+			$output = AttributeMapping::getMappingValue( $this->attribute, $this->merchant_attribute, $this->product, $this->config, $this->parent_product );
 		} elseif ( strpos( $this->attribute, self::PRODUCT_DYNAMIC_ATTRIBUTE_PREFIX ) !== false ) {
-			$output = DynamicAttributes::getDynamicAttributeValue( $this->attribute, $this->merchant_attribute, $this->product, $this->config );
+			$output = DynamicAttributes::getDynamicAttributeValue( $this->attribute, $this->merchant_attribute, $this->product, $this->config, $this->parent_product );
 		} elseif ( strpos( $this->attribute, self::PRODUCT_CUSTOM_IDENTIFIER ) !== false || woo_feed_strpos_array(
 				array( '_identifier_gtin', '_identifier_ean', '_identifier_mpn' ),
 				$this->attribute

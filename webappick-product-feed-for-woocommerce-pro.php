@@ -10,7 +10,7 @@
  * Plugin URI:  https://webappick.com/
  * Description: Easily generate woocommerce product feed for any marketing channel like Google Shopping(Merchant),
  * Facebook Remarketing, Bing, eBay & more. Support 100+ Merchants.
- * Version:     7.3.3
+ * Version:     7.4.0
  * Author:      WebAppick Author
  * URI:  https://webappick.com/
  * License:     GPL v2
@@ -19,29 +19,19 @@
  *
  * WP Requirement & Test
  * Requires at least: 4.4
- * Tested up to: 6.3.2
+ * Tested up to: 6.5
  * Requires PHP: 5.6
+ * Requires Plugins: woocommerce
  *
  * WC Requirement & Test
  * WC requires at least: 3.2
- * WC tested up to: 8.2.1
+ * WC tested up to: 8.6.1
  * @link    https://webappick.com
  */
 
 use CTXFeed\V5\API\RestController;
+use CTXFeed\V5\Common\Helper;
 use CTXFeed\V5\Override\OverrideFactory;
-
-update_option(
-	'WebAppick_' . md5( 'webappick-product-feed-for-woocommerce-pro' ) . '_manage_license',
-	[
-		'key'         => '*************',
-		'status'      => 'active',
-		'remaining'   => '10',
-		'activations' => '5',
-		'limit'       => '999',
-		'unlimited'   => true,
-	]
-);
 
 if ( ! defined( 'ABSPATH' ) ) {
 	die();
@@ -72,7 +62,7 @@ if ( ! defined( 'WOO_FEED_PRO_VERSION' ) ) {
 	 *
 	 * @since 3.1.6
 	 */
-	define( 'WOO_FEED_PRO_VERSION', '7.3.3' );
+	define( 'WOO_FEED_PRO_VERSION', '7.4.0' );
 }
 
 if ( ! defined( 'WOO_FEED_PRO_FILE' ) ) {
@@ -295,6 +285,12 @@ require_once dirname( __FILE__ ) . DIRECTORY_SEPARATOR
              . 'autoload.php';
 
 /**
+ * Load Compatibility Module
+ */
+require_once WOO_FEED_PRO_PATH . 'libs/webappick-product-feed-for-woocommerce/ctx-compatibility/autoload.php';
+
+
+/**
  * Load V5 Module
  */
 require_once WOO_FEED_PRO_PATH . 'libs/webappick-product-feed-for-woocommerce/V5/autoload.php';
@@ -331,7 +327,24 @@ require_once __DIR__ . DIRECTORY_SEPARATOR
              . 'includes' . DIRECTORY_SEPARATOR
              . 'helper.php';
 
-require_once WOO_FEED_PRO_PATH . 'libs/webappick-product-feed-for-woocommerce/includes/cron-helper.php';
+/**
+ * We've introduced a better system to handle the cron job. You can read more about it here
+ * libs/webappick-product-feed-for-woocommerce/V5/Helper/CronHelper.php
+ * But this feature works only if the WP_CRON is enabled.
+ * That's why we've checked here if the WP_CRON is enabled or not.
+ * If WP_Cron is disabled then initialize old cron system by including the cron-helper.php file.
+ *
+ * Some users are claiming that the new cron system is not working for them. So, we've added a setting to enable/disable the new cron system.
+ * When new cron system is disabled, the old cron system will be initialized.
+ *
+ * @link : https://webappick.atlassian.net/browse/CBT-363
+ *
+ * since 7.3.11
+ */
+if ( ! Helper::should_init_new_cron_system() ) {
+	require_once WOO_FEED_PRO_PATH . 'libs/webappick-product-feed-for-woocommerce/includes/cron-helper.php';
+}
+
 
 /**
  * Installer

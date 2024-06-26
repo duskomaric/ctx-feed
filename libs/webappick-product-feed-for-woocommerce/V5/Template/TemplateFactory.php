@@ -10,6 +10,7 @@
 namespace CTXFeed\V5\Template;
 
 use CTXFeed\V5\Override\Heureka_skTemplate;
+use CTXFeed\V5\Override\Zbozi_czTemplate;
 use CTXFeed\V5\Structure\CustomStructure;
 
 /**
@@ -30,6 +31,10 @@ class TemplateFactory {
 		// TODO: Remove this condition when class "OverrideFactory" initialized.
 		if( 'heureka.sk' === $config->get_feed_template() ) {
 			new Heureka_skTemplate();
+		}
+
+		if( 'zbozi.cz' === $config->get_feed_template() ) {
+			new Zbozi_czTemplate();
 		}
 
 		$group_class = self::get_grouped_templates( $config->provider );
@@ -75,15 +80,17 @@ class TemplateFactory {
 
 		$method    = 'get_' . $config->feedType . '_structure';
 
-		if ( 'Googlereview' === $template && class_exists( $class ) && method_exists( $class, $method ) ) {
-			return ( new $class( $config, $ids ) )->$method();
+		$structure = [];
+
+		if ('Googlereview' === $template && class_exists($class) && method_exists($class, $method)) {
+			$structure =  (new $class($config, $ids))->$method();
 		}
 
-		if ( class_exists( $class ) && method_exists( $class, $method ) ) {
-			return ( new $class( $config ) )->$method();
+		if (class_exists($class) && method_exists($class, $method)) {
+			$structure =  (new $class($config))->$method();
+		}else{
+			$structure = (new CustomStructure($config))->$method();
 		}
-
-		$structure = (new CustomStructure($config))->$method();
 
 		set_transient('ctx_feed_structure_transient', $structure, HOUR_IN_SECONDS);
 

@@ -3326,7 +3326,7 @@ class TemplateConfig {
 					'item_group_id',
 					'link',
 					'product_type',
-					'current_category',
+					'google_product_category',
 					'image',
 					'condition',
 					'availability',

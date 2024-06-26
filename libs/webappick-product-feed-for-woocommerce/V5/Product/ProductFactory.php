@@ -7,7 +7,6 @@
 
 namespace CTXFeed\V5\Product;
 
-use CTXFeed\V5\Compatibility\CompatibilityFactory;
 use CTXFeed\V5\File\FileFactory;
 use CTXFeed\V5\Filter\ValidateProduct;
 use CTXFeed\V5\Helper\ProductHelper;

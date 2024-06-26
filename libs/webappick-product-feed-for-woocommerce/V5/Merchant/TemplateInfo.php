@@ -484,7 +484,7 @@ class TemplateInfo {
 				'feed_file_type' => array( 'XML' ),
 			),
 			'admarkt'                                       => array(
-				'link'           => 'https://ads.tiktok.com/help/article/catalog-product-parameters?redirected=2',
+				'link'           => 'https://ecg-icas.github.io/icas/doc/prod/feeds.html#file-format',
 				'feed_file_type' => array( 'XML' ),
 				'doc'            => array(
 					esc_html__( 'Marktplaats – The Ultimate Ecommerce Advertising Destination', 'woo-feed' )           => 'https://webappick.com/marktplaats-ultimate-ecommerce-advertising/',

@@ -20,6 +20,8 @@ class PinterestTemplate {
 	public function __construct() {
 		add_filter( 'woo_feed_filter_product_title', array( $this, 'woo_feed_filter_product_title_callback' ), 10, 1 );
 
+		add_filter( 'woo_feed_attribute_separator', array( $this, 'woo_feed_attribute_separator_callback' ), 10, 1 );
+
 		add_filter(
 			'woo_feed_filter_product_description_with_html',
 			array(
@@ -58,11 +60,22 @@ class PinterestTemplate {
 	 * @return string
 	 */
 	public function woo_feed_filter_product_title_callback( $title ) {
-		// Replace comma with dash.
-		$title = str_replace( ',', '-', $title );
 
-		// Limit to 150 characters.
-		return substr( $title, 0, 150 );
+		// Google Shopping Product Title Character limit: max 150.
+		$title = mb_substr($title, 0, 150, 'UTF-8');
+
+		return $title;
+	}
+
+	/**
+	 * Set (-) as separator for this merchant.
+	 *
+	 * @param $separator string attribute separator.
+	 *
+	 * @return string
+	 */
+	public function woo_feed_attribute_separator_callback( $separator ) {
+		return ' - ';
 	}
 
 	/**

@@ -35,6 +35,10 @@ class Advance {
 			$outOfStockEnabled = $config['is_outOfStock'];
 		}
 
+		if ( ! $product instanceof \WC_Product ) {
+			return  $value;
+		}
+
 		if ( $outOfStockEnabled && $product->is_type( 'variable' ) && $product->has_child() ) {
 			$attr                = "pa_" . $attr;
 			$child_ids           = $product->get_children();
