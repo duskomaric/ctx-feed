@@ -2,7 +2,7 @@
 
 namespace CTXFeed\V5\Override;
 
-use CTXFeed\V5\Compatibility\ExcludeCaching;
+use CTXFeed\Compatibility\ExcludeCaching;
 
 /**
  * Class OverrideFactory
@@ -35,7 +35,7 @@ class OverrideFactory {
 	/**
 	 * Exclude Feed URL from Caching.
 	 *
-	 * @return \CTXFeed\V5\Compatibility\ExcludeCaching
+	 * @return CTXFeed\Compatibility\ExcludeCaching
 	 */
 	public static function excludeCache() {//phpcs:ignore
 		return new ExcludeCaching;

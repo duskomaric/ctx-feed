@@ -67,7 +67,10 @@ class Filter {
 		$filters = [
 			'exclude_variable_product',
 			'exclude_empty_title_products',
-			'exclude_hidden_products'
+			'exclude_hidden_products',
+            'exclude_variation_parent_draft_products',
+            'exclude_variation_parent_private_products',
+
 		];
 
 		if ( Helper::is_pro() ) { // These filters only applied for pro version.
@@ -173,12 +176,34 @@ class Filter {
 	 */
 	public function exclude_hidden_products() {
 		$remove_hidden_products = ! $this->config->remove_hidden_products();
-		if ( $remove_hidden_products && ( $this->product->get_catalog_visibility() === 'hidden' || ! $this->product->is_visible() ) ) {
-			return true;
+		if ( $this->product->get_status() == 'private' ) {
+			if ( $remove_hidden_products && ( $this->product->get_catalog_visibility() === 'hidden' ) ) {
+				return true;
+			}
+		} else {
+			if ( $remove_hidden_products && ( $this->product->get_catalog_visibility() === 'hidden' || ! $this->product->is_visible() ) ) {
+				return true;
+			}
 		}
 
 		return false;
 	}
+
+    /**
+     * Remove  variation products whose parent status is provate.
+     *
+     * @return bool
+     */
+    public function exclude_variation_parent_private_products() {
+        if ( $this->product->is_type( 'variation' ) ) {
+            $parent_id = $this->product->get_parent_id();
+            if ( get_post_status( $parent_id ) === 'private' && !in_array('private',$this->config->get_post_status_to_include())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
 	/**
 	 * Remove hidden variation products whose parent status is draft.
@@ -186,23 +211,31 @@ class Filter {
 	 * @return bool
 	 */
 	public function exclude_variation_parent_draft_products() {
-		if( $this->product->is_type('variation') ){
+		if ( $this->product->is_type( 'variation' ) ) {
+			$post_status = $this->config->get_post_status_to_include();
 			$parent_id = $this->product->get_parent_id();
-			if( $this->config->remove_hidden_products() && get_post_status( $parent_id ) === 'draft' ){
+			if ( $this->config->remove_hidden_products() && get_post_status( $parent_id ) === 'draft' ) {
 				return true;
-			}
+			}else if( !in_array("draft", $post_status ) && get_post_status( $parent_id ) === 'draft' ) {
+				return true;
+			}else if( !in_array("draft", $post_status ) && get_post_status( $parent_id ) === 'draft' ) {
+                return true;
+            }
 		}
+
 		return false;
 	}
+
 	/**
 	 * Remove hidden variation products whose parent status is draft.
 	 *
 	 * @return bool
 	 */
 	public function exclude_override_out_of_stock_isibility() {
-		if( !$this->config->get_outofstock_visibility() && $this->product->get_stock_status() ==='outofstock' && 'yes' === get_option( 'woocommerce_hide_out_of_stock_items') ){
+		if ( ! $this->config->get_outofstock_visibility() && $this->product->get_stock_status() === 'outofstock' && 'yes' === get_option( 'woocommerce_hide_out_of_stock_items' ) ) {
 			return true;
 		}
+
 		return false;
 	}
 

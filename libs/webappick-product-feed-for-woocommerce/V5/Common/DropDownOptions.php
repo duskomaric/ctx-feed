@@ -8,6 +8,7 @@ use CTXFeed\V5\Merchant\TemplateConfig;
 use CTXFeed\V5\Product\ProductAttributeFactory;
 use CTXFeed\V5\Query\QueryFactory;
 use CTXFeed\V5\Query\WCQuery;
+use CTXFeed\V5\Query\WPQuery;
 use CTXFeed\V5\Utility\Cache;
 use CTXFeed\V5\Utility\Config;
 use CTXFeed\V5\Utility\DropDown;
@@ -328,7 +329,7 @@ class DropDownOptions {
 	 * @return array|false|mixed|string|string[]
 	 */
 	public static function provider( $selected = '', $dropdown = true ) {
-		$merchant          = [
+		$merchant = [
 			1 => [
 				'optionGroup' => 'Custom Templates',
 				'options'     => [
@@ -482,7 +483,7 @@ class DropDownOptions {
 			'csv'  => 'CSV',
 			'tsv'  => 'TSV',
 			'xls'  => 'XLS',
-			'xlsx'  => 'XLSX',
+			'xlsx' => 'XLSX',
 			'txt'  => 'TXT',
 			'json' => 'JSON',
 		);
@@ -770,7 +771,7 @@ class DropDownOptions {
 					} else {
 						$group_id = 'group-child-' . $cat->parent;
 					}
-					$cat->name= htmlspecialchars_decode($cat->name);
+					$cat->name                = htmlspecialchars_decode( $cat->name );
 					self::$cats[ $cat->slug ] = [
 						'name'      => $slug . $cat->name,
 						'id'        => $cat->term_id,
@@ -805,8 +806,8 @@ class DropDownOptions {
 	 */
 	public static function get_categories( $args ) {
 
-		$current_language = defined('ICL_LANGUAGE_CODE') ? ICL_LANGUAGE_CODE : '';
-		$query_vars = [
+		$current_language = defined( 'ICL_LANGUAGE_CODE' ) ? ICL_LANGUAGE_CODE : '';
+		$query_vars       = [
 			'taxonomy'     => 'product_cat',
 			'orderby'      => 'term_group',
 			'show_count'   => 1,
@@ -814,9 +815,9 @@ class DropDownOptions {
 			'hierarchical' => 1,
 			'title_li'     => '',
 			'hide_empty'   => 0,
-			'language'	   => $current_language
+			'language'     => $current_language
 		];
-		$query_vars = wp_parse_args( $args, $query_vars);
+		$query_vars       = wp_parse_args( $args, $query_vars );
 
 		$categories = get_categories( $query_vars );
 		if ( ! empty( $categories ) ) {
@@ -825,7 +826,7 @@ class DropDownOptions {
 			}
 		}
 
-		return apply_filters('ctx_feed_filter_categories', self::$cats, $query_vars);
+		return apply_filters( 'ctx_feed_filter_categories', self::$cats, $query_vars );
 	}
 
 
@@ -917,13 +918,13 @@ class DropDownOptions {
 			'18' => 'only_parent',
 			'19' => 'parent',
 			'20' => 'parent_if_empty',
-			'21' => '',
-			'22' => '',
+			'21' => 'htmlspecialchars',
+			'22' => 'htmlspecialchars_decode',
 		);
 
 		//when wpml or polylang plugin is activated
 		if (
-			 class_exists( 'SitePress', false ) || defined( 'POLYLANG_BASENAME' ) || function_exists( 'PLL' ) // When WPML is active
+			class_exists( 'SitePress', false ) || defined( 'POLYLANG_BASENAME' ) || function_exists( 'PLL' ) // When WPML is active
 			|| is_plugin_active( 'translatepress-multilingual/index.php' ) // Translatepress
 		) {
 			array_push( $output_types, 'parent_lang' );
@@ -942,7 +943,7 @@ class DropDownOptions {
 		return (array) apply_filters( 'woo_feed_product_statuses', get_post_statuses() );
 	}
 
-	public static function all_product_ids( $args ) {
+	public static function all_product_ids_old( $args ) {
 		if ( ! function_exists( 'is_plugin_active' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
 		}
@@ -950,7 +951,7 @@ class DropDownOptions {
 			return [];
 		}
 
-		$query_vars = wp_parse_args( $args, [ 'return' => 'objects' ]);
+		$query_vars = wp_parse_args( $args, [ 'return' => 'objects' ] );
 
 		$config   = new Config( [] );
 		$wc_query = new WCQuery( $config, $query_vars );
@@ -966,6 +967,86 @@ class DropDownOptions {
 		}
 
 		return apply_filters( 'ctx_feed_all_product_ids_with_title', $product_ids_with_titles, $config, $wc_query, $query_vars );
+	}
+
+
+	/**
+	 * Product search with id, title, sku.
+	 *
+	 * @param $args
+	 *
+	 * @return array|mixed|null
+	 * @example [
+	 *              's' => 'hoodie' //for title search.
+	 *              'include' => 1,2,3 // for id search
+	 *              'sku' => 'woo-beanie' // for sku search
+	 *          ];
+	 *
+	 *
+	 */
+	public static function all_product_ids( $args ) {
+		if ( ! function_exists( 'is_plugin_active' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+		if ( ! is_plugin_active( 'woocommerce/woocommerce.php' ) ) {
+			return [];
+		}
+
+		$config     = new Config( [] );
+		$query_vars = wp_parse_args( $args, [ 'return' => 'objects', 'limit' => 200 ] );
+
+		if ( isset( $query_vars['sku'] ) ) {
+			$args = array(
+				'post_type'   => array( 'product', 'product_variation' ),
+				'meta_key'    => '_sku',
+				'post_status' => array( 'publish' ),
+				'fields'      => 'all',
+				'meta_query'  => array(
+					array(
+						'key'     => '_sku',
+						'value'   => $query_vars['sku'],
+						'compare' => 'LIKE',
+					),
+				),
+			);
+
+			// search with sku
+			$wp_query = new WPQuery( $config, $args );
+			$products = $wp_query->product_ids();
+
+		} else {
+			// search with id or title
+			$wc_query = new WCQuery( $config, $query_vars );
+			$products = $wc_query->product_ids();
+		}
+
+		$product_ids_with_titles = self::get_formatted_product_titles( $products );
+
+
+		return apply_filters( 'ctx_feed_all_product_ids_with_title', $product_ids_with_titles, $config, $query_vars );
+	}
+
+
+	/**
+	 * @param $products
+	 *
+	 * @return array
+	 */
+	private static function get_formatted_product_titles( $products ) {
+		$product_ids_with_titles = [];
+		foreach ( $products as $product ) {
+			if ( $product instanceof \WC_Product ) {
+				$id                             = $product->get_id();
+				$sku                            = ! empty( $product->get_sku() ) ? "::" . $product->get_sku() : '';
+				$product_ids_with_titles[ $id ] = $id . $sku . '::' . $product->get_name();
+			} else if ( $product instanceof \WP_Post ) {
+				$id                             = $product->ID;
+				$sku                            = ! empty( get_post_meta( $product->ID, '_sku', true ) ) ? "::" . get_post_meta( $product->ID, '_sku', true ) : '';
+				$product_ids_with_titles[ $id ] = $id . $sku . '::' . $product->post_title;
+			}
+		}
+
+		return $product_ids_with_titles;
 	}
 
 
@@ -1074,9 +1155,18 @@ class DropDownOptions {
 
 					$options = $currencies;
 				}
-			} elseif ( class_exists( 'WOOCS' ) ) {
+			} elseif ( is_plugin_active( 'woocommerce-currency-switcher/index.php' ) || class_exists( 'WOOCS' ) ) {
 				global $WOOCS;
-				$get_currencies = $WOOCS->get_currencies();
+//				$get_currencies = $WOOCS->get_currencies();
+//				if ( ! empty( $get_currencies ) ) {
+//					$currencies = [];
+//					foreach ( $get_currencies as $key => $currency ) {
+//						$currencies[ $key ] = $key;
+//					}
+//					$options = $currencies;
+//				}
+
+				$get_currencies = get_option('woocs', array());
 				if ( ! empty( $get_currencies ) ) {
 					$currencies = [];
 					foreach ( $get_currencies as $key => $currency ) {
@@ -1084,6 +1174,7 @@ class DropDownOptions {
 					}
 					$options = $currencies;
 				}
+
 			} elseif ( is_plugin_active( 'currency-switcher-woocommerce/currency-switcher-woocommerce.php' ) ) {
 
 				if ( function_exists( 'alg_get_enabled_currencies' ) ) {

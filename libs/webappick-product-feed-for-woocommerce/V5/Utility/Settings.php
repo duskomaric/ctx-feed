@@ -1,6 +1,9 @@
 <?php
 
 namespace CTXFeed\V5\Utility;
+
+use CTXFeed\V5\Common\Helper;
+
 /**
  * @class      Settings
  *
@@ -11,40 +14,42 @@ class Settings {
 	/**
 	 * Get saved settings.
 	 *
-	 * @param string $key     Option name.
+	 * @param string $key Option name.
 	 *                        All default values will be returned if this set to 'defaults',
 	 *                        all settings will be return if set to 'all'.
-	 * @param bool   $default value to return if no matching data found for the key (option)
+	 * @param bool $default value to return if no matching data found for the key (option)
 	 *
 	 * @return array|bool|string|mixed
 	 * @since 3.3.11
 	 */
 	public static function get( $key = 'all', $default = false ) {
 		$defaults = [
-			'per_batch'                     => 200,
-			'product_query_type'            => 'wc',
-			'variation_query_type'          => 'individual',
-			'enable_error_debugging'        => 'off',
-			'cache_ttl'                     => 6 * HOUR_IN_SECONDS,
-			'overridden_structured_data'    => 'off',
-			'disable_mpn'                   => 'enable',
-			'disable_brand'                 => 'enable',
-			'disable_pixel'                 => 'enable',
-			'pixel_id'                      => '',
-			'disable_remarketing'           => 'disable',
-			'remarketing_id'                => '',
-			'remarketing_label'             => '',
-			'pinterest_tag_id'              => '',
-			'pinterest_conversion_tracking' => 'disable',
-			'allow_all_shipping'            => 'no',
-			'only_free_shipping'            => 'yes',
-			'only_local_pickup_shipping'    => 'no',
-			'enable_ftp_upload'             => 'no',
-			'enable_cdata'                  => 'no',
-			'woo_feed_taxonomy'             => array(
+			'per_batch'                       => 200,
+			'cron_job_new_cron_system_enabled' => Helper::is_pro() ? true : false,
+			'cron_job__per_batch__safe_limit' => 1000,
+			'product_query_type'              => 'wc',
+			'variation_query_type'            => 'individual',
+			'enable_error_debugging'          => 'off',
+			'cache_ttl'                       => 6 * HOUR_IN_SECONDS,
+			'overridden_structured_data'      => 'off',
+			'disable_mpn'                     => 'enable',
+			'disable_brand'                   => 'enable',
+			'disable_pixel'                   => 'enable',
+			'pixel_id'                        => '',
+			'disable_remarketing'             => 'disable',
+			'remarketing_id'                  => '',
+			'remarketing_label'               => '',
+			'pinterest_tag_id'                => '',
+			'pinterest_conversion_tracking'   => 'disable',
+			'allow_all_shipping'              => 'no',
+			'only_free_shipping'              => 'yes',
+			'only_local_pickup_shipping'      => 'no',
+			'enable_ftp_upload'               => 'no',
+			'enable_cdata'                    => 'no',
+			'woo_feed_taxonomy'               => array(
 				'brand' => 'disable',
 			),
-			'woo_feed_identifier'           => array(
+			'woo_feed_identifier'             => array(
 				'gtin'                      => 'disable',
 				'ean'                       => 'disable',
 				'mpn'                       => 'disable',
@@ -118,8 +123,8 @@ class Settings {
 	 * @since 3.3.11
 	 */
 	public static function save( $args ) {
-		$data     = woo_feed_get_options( 'all' );
-		$defaults = woo_feed_get_options( 'defaults' );
+		$data     = self::get( 'all' );
+		$defaults = self::get( 'defaults' );
 		$_data    = $data;
 
 		if ( array_key_exists( 'per_batch', $args ) ) {
@@ -129,6 +134,19 @@ class Settings {
 			}
 			unset( $args['unset'] );
 		}
+		if ( array_key_exists( 'cron_job_new_cron_system_enabled', $args ) ) {
+			$data['cron_job_new_cron_system_enabled'] = absint( $args['cron_job_new_cron_system_enabled'] );
+			unset( $args['cron_job_new_cron_system_enabled'] );
+		}
+
+		if ( array_key_exists( 'cron_job__per_batch__safe_limit', $args ) ) {
+			$data['cron_job__per_batch__safe_limit'] = absint( $args['cron_job__per_batch__safe_limit'] );
+			if ( $data['cron_job__per_batch__safe_limit'] <= 0 ) {
+				$data['cron_job__per_batch__safe_limit'] = $_data['cron_job__per_batch__safe_limit'] > 0 ? $_data['cron_job__per_batch__safe_limit'] : $defaults['cron_job__per_batch__safe_limit'];
+			}
+			unset( $args['cron_job__per_batch__safe_limit'] );
+		}
+
 		if ( array_key_exists( 'product_query_type', $args ) ) {
 			$data['product_query_type'] = strtolower( $args['product_query_type'] );
 			$query_types                = array_keys( woo_feed_get_query_type_options() );

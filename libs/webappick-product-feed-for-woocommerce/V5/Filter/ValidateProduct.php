@@ -69,6 +69,8 @@ class ValidateProduct {
 			$valid = false;
 		}
 
+
+
 		return apply_filters( 'ctx_validate_product_before_include', $valid, $product, $config );
 	}
 }

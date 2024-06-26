@@ -25,71 +25,71 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Class Insights
  */
 class Insights {
-	
+
 	/**
 	 * The notice text
 	 *
 	 * @var string
 	 */
 	protected $notice;
-	
+
 	/**
 	 * Whether to the notice or not
 	 *
 	 * @var boolean
 	 */
 	protected $show_notice = true;
-	
+
 	/**
 	 * If extra data needs to be sent
 	 *
 	 * @var array
 	 */
 	protected $extra_data = array();
-	
+
 	/**
 	 * CTXFeed\AppServices\Client
 	 *
 	 * @var Client
 	 */
 	protected $client;
-	
+
 	/**
 	 * Flag for checking if the init method is already called.
 	 * @var bool
 	 */
 	private $didInit = false;
-	
+
 	/**
 	 * Email Message Template For sending Support Ticket
 	 * @var string
 	 */
 	protected $ticketTemplate = '';
-	
+
 	/**
 	 * Ticket Email Recipient
 	 * @var string
 	 */
 	protected $ticketRecipient = '';
-	
+
 	/**
 	 * Response to show after support ticket submitted.
 	 * @var string
 	 */
 	protected $supportResponse = '';
-	
+
 	/**
 	 * Error Response for the support ticket
 	 * @var string
 	 */
 	protected $supportErrorResponse = '';
-	
+
 	/**
 	 * Support Page URL
 	 * @var string
 	 */
 	protected $supportURL = '';
-	
+
 	/**
 	 * Initialize the class
 	 *
@@ -101,12 +101,12 @@ class Insights {
 		if ( is_string( $client ) && ! empty( $name ) && ! empty( $file ) ) {
 			$client = new Client( $client, $name, $file );
 		}
-		
+
 		if ( is_object( $client ) && is_a( $client, 'CTXFeed\AppServices\Client' ) ) {
 			$this->client = $client;
 		}
 	}
-	
+
 	/**
 	 * Don't show the notice
 	 *
@@ -116,7 +116,7 @@ class Insights {
 		$this->show_notice = false;
 		return $this;
 	}
-	
+
 	/**
 	 * Add extra data if needed
 	 *
@@ -126,10 +126,10 @@ class Insights {
 	 */
 	public function add_extra( $data = array() ) {
 		$this->extra_data = $data;
-		
+
 		return $this;
 	}
-	
+
 	/**
 	 * Set custom notice text
 	 *
@@ -139,10 +139,10 @@ class Insights {
 	 */
 	public function notice( $text ) {
 		$this->notice = $text;
-		
+
 		return $this;
 	}
-	
+
 	/**
 	 * Initialize insights
 	 *
@@ -178,7 +178,7 @@ class Insights {
 		if ( FALSE !== $ticketTemplate ) {
 			$this->ticketTemplate = $ticketTemplate;
 		}
-		
+
 		// initialize.
 		if ( $this->client->getType() == 'plugin' ) {
 			$this->init_plugin();
@@ -187,7 +187,7 @@ class Insights {
 		}
 		$this->didInit = true;
 	}
-	
+
 	/**
 	 * Initialize theme hooks
 	 *
@@ -195,11 +195,11 @@ class Insights {
 	 */
 	private function init_theme() {
 		$this->init_common();
-		
+
 		add_action( 'switch_theme', [ $this, 'deactivation_cleanup' ] );
 		add_action( 'switch_theme', [ $this, 'theme_deactivated' ], 12, 3 );
 	}
-	
+
 	/**
 	 * Initialize plugin hooks
 	 *
@@ -211,13 +211,13 @@ class Insights {
 			add_action( 'plugin_action_links_' . $this->client->getBasename(), [ $this, 'plugin_action_links' ] );
 			add_action( 'admin_footer', [ $this, 'deactivate_scripts' ] );
 		}
-		
+
 		$this->init_common();
-		
+
 		register_activation_hook( $this->client->getFile(), [ $this, 'activate_plugin' ] );
 		register_deactivation_hook( $this->client->getFile(), [ $this, 'deactivation_cleanup' ] );
 	}
-	
+
 	/**
 	 * Initialize common hooks
 	 *
@@ -237,7 +237,7 @@ class Insights {
 		add_filter( 'cron_schedules', [ $this, 'add_weekly_schedule' ] );
 		add_action( $this->client->getSlug() . '_tracker_send_event', [ $this, 'send_tracking_data' ] );
 	}
-	
+
 	/**
 	 * Send tracking data to WebAppick server
 	 *
@@ -276,7 +276,7 @@ class Insights {
 		$this->client->send_request( $this->get_tracking_data(), 'track' );
 		update_option( $this->client->getSlug() . '_tracking_last_send', time(), false );
 	}
-	
+
 	/**
 	 * Get the tracking data points
 	 *
@@ -285,6 +285,7 @@ class Insights {
 	protected function get_tracking_data() {
 		$all_plugins  = $this->__get_all_plugins();
 		$admin_user   = $this->__get_admin();
+        $store_country = get_option('woocommerce_default_country');
 		$admin_emails = [ get_option( 'admin_email' ), $admin_user->user_email ];
 		$admin_emails = array_filter( $admin_emails );
 		$admin_emails = array_unique( $admin_emails );
@@ -303,16 +304,17 @@ class Insights {
 			'inactive_plugins' => $all_plugins['inactive_plugins'],
 			'ip_address'       => $this->__get_user_ip_address(),
 			'theme'            => get_stylesheet(),
+            'country'          => $store_country
 		];
 		// for child classes.
 		$extra = $this->get_extra_data();
 		if ( ! empty( $extra ) ) {
 			$data['extra'] = $extra;
 		}
-		
+
 		return apply_filters( $this->client->getSlug() . '_tracker_data', $data );
 	}
-	
+
 	/**
 	 * If a child class wants to send extra data
 	 *
@@ -321,7 +323,7 @@ class Insights {
 	protected function get_extra_data() {
 		return $this->extra_data;
 	}
-	
+
 	/**
 	 * Explain the user which data we collect
 	 *
@@ -332,10 +334,10 @@ class Insights {
 			esc_html__( 'Server environment details (php, mysql, server, WordPress versions).', 'woo-feed' ),
 		];
 		$data = apply_filters( $this->client->getSlug() . '_what_tracked', $data );
-		
+
 		return $data;
 	}
-	
+
 	/**
 	 * Get the message array of what data being collected
 	 * @return array
@@ -343,7 +345,7 @@ class Insights {
 	public function get_data_collection_description() {
 		return $this->data_we_collect();
 	}
-	
+
 	/**
 	 * Get Site SuperAdmin
 	 * Returns Empty WP_User instance if fails
@@ -359,10 +361,10 @@ class Insights {
 				'paged'   => 1,
 			]
 		);
-		
+
 		return ( is_array( $admins ) && ! empty( $admins ) ) ? $admins[0] : new WP_User();
 	}
-	
+
 	/**
 	 * Check if the user has opted into tracking
 	 *
@@ -371,7 +373,7 @@ class Insights {
 	public function is_tracking_allowed() {
 		return 'yes' == get_option( $this->client->getSlug() . '_allow_tracking', 'no' );
 	}
-	
+
 	/**
 	 * Get the last time a tracking was sent
 	 *
@@ -380,7 +382,7 @@ class Insights {
 	private function __get_last_send() {
 		return get_option( $this->client->getSlug() . '_tracking_last_send', false );
 	}
-	
+
 	/**
 	 * Check if the notice has been dismissed or enabled
 	 *
@@ -391,10 +393,10 @@ class Insights {
 		if ( 'hide' == $hide_notice ) {
 			return true;
 		}
-		
+
 		return false;
 	}
-	
+
 	/**
 	 * Check if the current server is localhost
 	 *
@@ -405,7 +407,7 @@ class Insights {
         return apply_filters( 'WebAppick_is_local', isset( $_SERVER['REMOTE_ADDR'] ) ? in_array( $_SERVER['REMOTE_ADDR'], [ '127.0.0.1', '::1' ] ) : true );
 		// phpcs:enable
 	}
-	
+
 	/**
 	 * Schedule the event weekly
 	 *
@@ -417,7 +419,7 @@ class Insights {
 			wp_schedule_event( time(), 'weekly', $hook_name );
 		}
 	}
-	
+
 	/**
 	 * Clear any scheduled hook
 	 *
@@ -426,7 +428,7 @@ class Insights {
 	private function __clear_schedule_event() {
 		wp_clear_scheduled_hook( $this->client->getSlug() . '_tracker_send_event' );
 	}
-	
+
 	/**
 	 * Display the admin notice to users that have not opted-in or out
 	 *
@@ -436,17 +438,17 @@ class Insights {
 		if ( $this->__notice_dismissed() ) {
 			return;
 		}
-		
+
 		if ( $this->is_tracking_allowed() ) {
 			return;
 		}
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
-		
+
 		// don't show tracking if a local server.
-		if ( ! $this->__is_local_server() ) {
-			
+        if ( ! $this->__is_local_server() ) {
+
 			if ( empty( $this->notice ) ) {
 				$notice = sprintf(
 					apply_filters(
@@ -459,7 +461,7 @@ class Insights {
 			} else {
 				$notice = $this->notice;
 			}
-			
+
 			$notice .= ' (<a class="' . $this->client->getSlug() . '-insights-data-we-collect" href="#">' . esc_html__( 'what we collect', 'woo-feed' ) . '</a>)';
 			$notice .= '<p class="description" style="display:none;">' . implode( ', ', $this->data_we_collect() ) . '. ' . esc_html__( 'No sensitive data is tracked.', 'woo-feed' ) . '</p>';
 			echo '<div class="updated"><p>';
@@ -474,7 +476,7 @@ class Insights {
             });</script>";
 		}
 	}
-	
+
 	/**
 	 * Tracking Opt In URL
 	 * @return string
@@ -487,7 +489,7 @@ class Insights {
 			]
 		);
 	}
-	
+
 	/**
 	 * Tracking Opt Out URL
 	 * @return string
@@ -500,7 +502,7 @@ class Insights {
 			]
 		);
 	}
-	
+
 	/**
 	 * handle the optIn/optOut
 	 *
@@ -521,7 +523,7 @@ class Insights {
 			}
 		}
 	}
-	
+
 	/**
 	 * Add query vars to removable query args array
 	 *
@@ -535,7 +537,7 @@ class Insights {
 			[ $this->client->getSlug() . '_tracker_optIn', $this->client->getSlug() . '_tracker_optOut', '_wpnonce' ]
 		);
 	}
-	
+
 	/**
 	 * Tracking optIn
 	 *
@@ -551,7 +553,7 @@ class Insights {
 		$this->__schedule_event();
 		$this->send_tracking_data( $override );
 	}
-	
+
 	/**
 	 * optOut from tracking
 	 *
@@ -562,7 +564,7 @@ class Insights {
 		update_option( $this->client->getSlug() . '_tracking_notice', 'hide', false );
 		$this->__clear_schedule_event();
 	}
-	
+
 	/**
 	 * Get the number of post counts
 	 *
@@ -581,7 +583,7 @@ class Insights {
 		);
 		// phpcs:enable
 	}
-	
+
 	/**
 	 * Get server related info.
 	 *
@@ -602,10 +604,10 @@ class Insights {
 			'php_ftp'              => function_exists( 'ftp_connect' ) ? 'Yes' : 'No',
 			'php_sftp'             => function_exists( 'ssh2_connect' ) ? 'Yes' : 'No',
 		];
-		
+
 		return $server_data;
 	}
-	
+
 	/**
 	 * Get WordPress related data.
 	 *
@@ -619,10 +621,10 @@ class Insights {
 			'version'      => get_bloginfo( 'version' ),
 			'multisite'    => is_multisite() ? 'Yes' : 'No',
 		];
-		
+
 		return $wp_data;
 	}
-	
+
 	/**
 	 * Get the list of active and inactive plugins
 	 * @return array
@@ -650,13 +652,13 @@ class Insights {
 				$plugins[ $k ] = $formatted;
 			}
 		}
-		
+
 		return [
 			'active_plugins'   => $active_plugins,
 			'inactive_plugins' => $plugins,
 		];
 	}
-	
+
 	/**
 	 * Get user totals based on user role.
 	 *
@@ -670,10 +672,10 @@ class Insights {
 		foreach ( $user_count_data['avail_roles'] as $role => $count ) {
 			$user_count[ $role ] = $count;
 		}
-		
+
 		return $user_count;
 	}
-	
+
 	/**
 	 * Add weekly cron schedule
 	 *
@@ -686,10 +688,10 @@ class Insights {
 			'interval' => DAY_IN_SECONDS * 7,
 			'display'  => __( 'Once Weekly', 'woo-feed' ),
 		];
-		
+
 		return $schedules;
 	}
-	
+
 	/**
 	 * Plugin activation hook
 	 *
@@ -706,7 +708,7 @@ class Insights {
 		delete_option( $this->client->getSlug() . '_tracking_last_send' );
 		$this->send_tracking_data( true );
 	}
-	
+
 	/**
 	 * Clear our options upon deactivation
 	 *
@@ -720,7 +722,7 @@ class Insights {
 		}
 		delete_option( $this->client->getSlug() . '_tracking_notice' );
 	}
-	
+
 	/**
 	 * Hook into action links and modify the deactivate link
 	 *
@@ -729,20 +731,20 @@ class Insights {
 	 * @return array
 	 */
 	public function plugin_action_links( $links ) {
-		
+
 		if ( array_key_exists( 'deactivate', $links ) ) {
 			$links['deactivate'] = str_replace( '<a', '<a class="' . $this->client->getSlug() . '-deactivate-link"', $links['deactivate'] );
 		}
-		
+
 		return $links;
 	}
-	
+
 	/**
 	 * Deactivation reasons
 	 * @return array
 	 */
 	private function __get_uninstall_reasons() {
-		
+
 		$reasons = [
 			[
 				'id'          => 'could-not-understand',
@@ -801,7 +803,7 @@ class Insights {
 		}
 		return $reasons;
 	}
-	
+
 	/**
 	 * Plugin deactivation uninstall reason submission
 	 *
@@ -849,7 +851,7 @@ class Insights {
 		wp_send_json_success();
 		wp_die();
 	}
-	
+
 	/**
 	 * Handle Support Ticket Submission
 	 * @return void
@@ -889,7 +891,7 @@ class Insights {
 					sanitize_text_field( $_REQUEST['email'] )
 				),
 			];
-			
+
 			foreach ( $_REQUEST as $k => $v ) {
 				$sanitizer = 'sanitize_text_field';
 				if ( 'email' == $k ) {
@@ -944,7 +946,7 @@ class Insights {
 		}
 		wp_die();
 	}
-	
+
 	/**
 	 * Handle the plugin deactivation feedback
 	 *
@@ -1335,7 +1337,7 @@ class Insights {
 		</script>
 		<?php
 	}
-	
+
 	/**
 	 * Run after theme deactivated
 	 *
@@ -1377,7 +1379,7 @@ class Insights {
 			$this->client->send_request( $data, 'reason' );
 		}
 	}
-	
+
 	/**
 	 * Get user IP Address
 	 * @return string
@@ -1391,10 +1393,10 @@ class Insights {
 		if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) ) {
 			return '';
 		}
-		
+
 		return $ip;
 	}
-	
+
 	/**
 	 * Get site name
 	 * @return string
@@ -1408,7 +1410,7 @@ class Insights {
 		if ( empty( $site_name ) ) {
 			$site_name = get_bloginfo( 'url' );
 		}
-		
+
 		return $site_name;
 	}
 }

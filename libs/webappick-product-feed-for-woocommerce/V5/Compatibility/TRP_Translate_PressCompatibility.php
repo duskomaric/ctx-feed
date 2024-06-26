@@ -15,6 +15,11 @@ namespace CTXFeed\V5\Compatibility;
 class TRP_Translate_PressCompatibility {
 
 	/**
+	 * @var \TRP_Settings
+	 */
+	private $trp_settings;
+
+	/**
 	 * @var \TRP_Translation_Render
 	 */
 	private $translatepress_renderer;
@@ -65,6 +70,11 @@ class TRP_Translate_PressCompatibility {
 				'woo_feed_filter_product_yoast_wpseo_title',
 				'woo_feed_filter_product_rank_math_title',
 				'woo_feed_filter_product_aioseop_title',
+				'woo_feed_filter_product_categories',
+				'woo_feed_get_google_g:color_attribute',
+				'woo_feed_get_google_color_attribute',
+				'woo_feed_get_google_g:brand_attribute',
+				'woo_feed_get_google_brand_attribute',
 			)
 		);
 
@@ -81,11 +91,11 @@ class TRP_Translate_PressCompatibility {
 		);
 
 		foreach ( $filters_with_param_3 as $filter ) {
-			add_filter( $filter, array( $this, 'get_tp_translate' ), 999, 3 );
+			add_filter( $filter, array( $this, 'trp_translate_strings' ), 999, 3 );
 		}
 
-		foreach ($filters_description_with_param_3 as $filter) {
-			add_filter($filter, array($this, 'get_tp_translate_for_description'), 999, 3);
+		foreach ( $filters_description_with_param_3 as $filter ) {
+			add_filter( $filter, array( $this, 'trp_translate_strings' ), 999, 3 );
 		}
 
 		/**
@@ -114,10 +124,11 @@ class TRP_Translate_PressCompatibility {
 	/**
 	 *  Get the translated string.
 	 *
-	 * @param string                     $output The output string.
-	 * @param \WC_Product                $product The product object.
+	 * @param string $output The output string.
+	 * @param \WC_Product $product The product object.
 	 * @param \CTXFeed\V5\Utility\Config $config The config object.
-     * @return string
+	 *
+	 * @return string
 	 */
 	public function get_tp_translate( $output, $product, $config ) { // phpcs:ignore
 		return $this->translate_string( $output, $config, $product );
@@ -129,20 +140,21 @@ class TRP_Translate_PressCompatibility {
 	 * @param string $output The output string.
 	 * @param \WC_Product $product The product object.
 	 * @param \CTXFeed\V5\Utility\Config $config The config object.
+	 *
 	 * @return string
 	 */
-	public function get_tp_translate_for_description($output, $product, $config)
-	{ // phpcs:ignore
-		return $this->translate_desc_string($output, $config, $product);
+	public function get_tp_translate_for_description( $output, $product, $config ) { // phpcs:ignore
+		return $this->translate_desc_string( $output, $config, $product );
 	}
 
 	/**
 	 * Get the translated string.
 	 *
-	 * @param string                     $output The output string.
+	 * @param string $output The output string.
 	 * @param \CTXFeed\V5\Utility\Config $config The config object.
-	 * @param \WC_Product                $product The product object.
-     * @return string
+	 * @param \WC_Product $product The product object.
+	 *
+	 * @return string
 	 */
 	public function translate_string( $output, $config, $product ) { // phpcs:ignore
 		global $wpdb;
@@ -165,14 +177,7 @@ class TRP_Translate_PressCompatibility {
 
 		if ( $this->translatepress_renderer ) {
 			// Remove empty strings.
-			$translatable_strings = array_filter(
-				explode( PHP_EOL, $output ),
-				function ( $paragragh ) {
-					if ( strlen( $paragragh ) > 1 ) {
-						return $paragragh;
-					}
-				}
-			);
+			$translatable_strings = self::get_translatable_strings( $output );
 
 			$translatable_strings = array_values( $translatable_strings );
 			$translated_strings   = array();
@@ -214,13 +219,13 @@ class TRP_Translate_PressCompatibility {
 	 * @param string $output The output string.
 	 * @param \CTXFeed\V5\Utility\Config $config The config object.
 	 * @param \WC_Product $product The product object.
+	 *
 	 * @return string
 	 */
-	public function translate_desc_string($output, $config, $product)
-	{ // phpcs:ignore
+	public function translate_desc_string( $output, $config, $product ) { // phpcs:ignore
 		global $wpdb;
 		$feed_language = $config->get_feed_language();
-		$table_name = $wpdb->prefix . 'trp_dictionary_' . strtolower($this->trp_settings['default-language']) . '_' . strtolower($feed_language);
+		$table_name    = $wpdb->prefix . 'trp_dictionary_' . strtolower( $this->trp_settings['default-language'] ) . '_' . strtolower( $feed_language );
 
 		/**
 		 * If the feed language is same as the default language or the table does not exist then return the output.
@@ -228,61 +233,96 @@ class TRP_Translate_PressCompatibility {
 		 * If the feed language is same as the default language then it means the language is not translated.
 		 */
 		if (
-			!$feed_language
+			! $feed_language
 			|| $feed_language === $this->trp_settings['default-language']
-			|| !$this->table_exists($table_name)
+			|| ! $this->table_exists( $table_name )
+			|| $output == ''
 		) {
 			return $output;
 		}
 
-		if ($this->translatepress_renderer) {
+		$translated_strings_new = [];
+		if ( $this->translatepress_renderer ) {
 			// Remove empty strings.
-
-			$product_id = $product->get_id();
+			$product_id                = $product->get_id();
 			$trp_original_meta_ids_sql = $wpdb->prepare( // phpcs:ignore
 				"SELECT `original_id` FROM `{$wpdb->prefix}trp_original_meta` WHERE `meta_key` = %s AND `meta_value` =  %d ORDER BY `meta_id` ASC",
 				'post_parent_id',
 				$product_id
 			);
-			$trp_original_meta_ids = $wpdb->get_results($trp_original_meta_ids_sql, ARRAY_A); // phpcs:ignore
-			$ids = array();
-			foreach ($trp_original_meta_ids as $value) {
-				array_push($ids, $value['original_id']);
-			}
-			if (count($ids) < 1) {
-				return $output;
-			}
-			$ids_str = implode(', ', $ids);
-			$trp_dictionary_sql = "SELECT `original`,`translated` FROM {$table_name} WHERE `original_id` IN ({$ids_str})";
-			$trp_dictionary_strings = $wpdb->get_results($trp_dictionary_sql); // phpcs:ignore
+			$trp_original_meta_ids     = $wpdb->get_results( $trp_original_meta_ids_sql, ARRAY_A ); // phpcs:ignore
 
-			$translated_strings_new = array();
-			foreach ($trp_dictionary_strings as $key => $string) {
-				if ($string->translated === '') {
-					$translated_strings_new[] = $string->original;
-				} else {
-					$translated_strings_new[] = $string->translated;
+			if ( count( $trp_original_meta_ids ) ) {
+				$ids = array();
+				foreach ( $trp_original_meta_ids as $value ) {
+					array_push( $ids, $value['original_id'] );
 				}
+				if ( count( $ids ) < 1 ) {
+					return $output;
+				}
+				$ids_str                = implode( ', ', $ids );
+				$trp_dictionary_sql     = "SELECT `original`,`translated` FROM {$table_name} WHERE `original_id` IN ({$ids_str})";
+				$trp_dictionary_strings = $wpdb->get_results( $trp_dictionary_sql ); // phpcs:ignore
 
+				$translated_strings_new = array();
+				foreach ( $trp_dictionary_strings as $key => $string ) {
+					if ( $string->translated === '' ) {
+						$translated_strings_new[] = $string->original;
+					} else {
+						$translated_strings_new[] = $string->translated;
+					}
+				}
+			} else {
+				$translated_strings_new[] = $this->translate_string( $output, $config, $product );
 			}
 
 			// If the translated strings array is not empty then implode the array with space.
-			if (count($translated_strings_new)) {
-				$output = implode(' ', $translated_strings_new);
+			if ( count( $translated_strings_new ) ) {
+				$output = implode( ' ', $translated_strings_new );
 			}
 		}
 
 		return $output;
 	}
 
+	/**
+	 * Get the translated string.
+	 *
+	 * @param string $output The output string.
+	 * @param \WC_Product $product The product object.
+	 * @param \CTXFeed\V5\Utility\Config $config The config object.
+	 *
+	 * @return string
+	 */
+	public function trp_translate_strings( $output, $product, $config ) { // phpcs:ignore
+		$original_output        = $output;
+		$strings                = self::get_translatable_strings( $output );
+		$strings                = array_map( 'trp_full_trim', $strings );
+		$translated_strings_new = $this->translatepress_renderer->process_strings( array_values( $strings ), $config->get_feed_language() );
+		// If the translated strings array is not empty then implode the array with space.
+		if ( count( $translated_strings_new ) ) {
+			$output = implode( ' ', $translated_strings_new );
+			$output = trim( $output );
+		}
+
+
+		if ( $output == '' ) {
+			$output = $original_output;
+		}
+
+		return $output;
+
+	}
+
 
 	/**
 	 * Get the translated string.
 	 *
-	 * @param string                     $output The output string.
-	 * @param \WC_Product                $product The product object.
+	 * @param string $output The output string.
+	 * @param \WC_Product $product The product object.
 	 * @param \CTXFeed\V5\Utility\Config $config The config object.
-     * @return string
+	 *
+	 * @return string
 	 */
 	public function get_tp_translate_url( $output, $product, $config ) { // phpcs:ignore
 		$feed_language = $config->get_feed_language();
@@ -299,7 +339,8 @@ class TRP_Translate_PressCompatibility {
 	 * Check if the url should be modified.
 	 *
 	 * @param string $feed_language The feed language.
-     * @return bool
+	 *
+	 * @return bool
 	 */
 	private function should_modify_url( $feed_language ) {
 		global $TRP_LANGUAGE;// phpcs:ignore
@@ -312,7 +353,8 @@ class TRP_Translate_PressCompatibility {
 	 *
 	 * @param string $output The output string.
 	 * @param string $feed_language The feed language.
-     * @return string
+	 *
+	 * @return string
 	 */
 	private function get_modified_url( $output, $feed_language ) {
 		$exploded_output = explode( home_url(), $output );
@@ -330,13 +372,16 @@ class TRP_Translate_PressCompatibility {
 	 * Get the url slug for the feed language.
 	 *
 	 * @param string $feed_language The feed language.
-     * @return string
+	 *
+	 * @return string
 	 */
 	private function get_url_slug( $feed_language ) {
 		$slug = $this->translatepress_url_converter->get_url_slug( $feed_language );
 
 		if ( $slug ) {
 			$slug = '/' . $slug;
+		}else{
+			$slug = '';
 		}
 
 		return $slug;
@@ -346,12 +391,24 @@ class TRP_Translate_PressCompatibility {
 	 * Check if the table exists.
 	 *
 	 * @param string $table_name The table name.
-     * @return bool
+	 *
+	 * @return bool
 	 */
 	private function table_exists( $table_name ) { // phpcs:ignore
 		global $wpdb;
 
 		return $wpdb->get_var( "SHOW TABLES LIKE '{$table_name}'" ) === $table_name; // phpcs:ignore
+	}
+
+	private static function get_translatable_strings( $output ) {
+
+		// Split the input string into an array using new lines and HTML entities as separators
+		$lines = preg_split( '/(<[^>]+>|\\n)/', $output, - 1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE );
+
+		// Filter out empty lines and trim each line
+		$result = array_filter( array_map( 'trim', $lines ) );
+
+		return $result;
 	}
 
 }

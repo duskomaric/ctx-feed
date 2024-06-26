@@ -21,42 +21,42 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Class Client
  */
 class Client {
-	
+
 	/**
 	 * The client version.
 	 *
 	 * @var string
 	 */
 	protected $clientVersion = '1.0.3';
-	
+
 	/**
 	 * API EndPoint.
 	 *
 	 * @var string
 	 */
 	protected $API_EndPoint = 'https://track.webappick.com/api/';
-	
+
 	/**
 	 * API Version.
 	 *
 	 * @var string
 	 */
 	protected $apiVersion = 'v1';
-	
+
 	/**
 	 * Hash identifier of the Plugin/Theme.
 	 *
 	 * @var string
 	 */
 	protected $hash;
-	
+
 	/**
 	 * Name of the Plugin/Theme.
 	 *
 	 * @var string
 	 */
 	protected $name;
-	
+
 	/**
 	 * The Plugin/Theme file path.
 	 * Example .../wp-content/Plugin/test-slug/test-slug.php.
@@ -64,7 +64,7 @@ class Client {
 	 * @var string
 	 */
 	protected $file;
-	
+
 	/**
 	 * Main Plugin/Theme file.
 	 * Example: test-slug/test-slug.php.
@@ -72,7 +72,7 @@ class Client {
 	 * @var string
 	 */
 	protected $basename;
-	
+
 	/**
 	 * Slug of the Plugin/Theme.
 	 * Example: test-slug.
@@ -80,21 +80,21 @@ class Client {
 	 * @var string
 	 */
 	protected $slug;
-	
+
 	/**
 	 * The project version.
 	 *
 	 * @var string
 	 */
 	protected $project_version;
-	
+
 	/**
 	 * The project type.
 	 *
 	 * @var string
 	 */
 	protected $type;
-	
+
 	/**
 	 * Store Product (unique) id for current Product
 	 * Required by WooCommerce API Manager > 2.0.
@@ -102,7 +102,7 @@ class Client {
 	 * @var bool|int
 	 */
 	protected $product_id;
-	
+
 	/**
 	 * Instance of Insights class.
 	 *
@@ -110,7 +110,7 @@ class Client {
 	 * @var Insights
 	 */
 	private $insights;
-	
+
 	/**
 	 * Instance of Promotions class.
 	 *
@@ -118,7 +118,7 @@ class Client {
 	 * @var Promotions
 	 */
 	private $promotions;
-	
+
 	/**
 	 * Instance of License class.
 	 *
@@ -126,7 +126,7 @@ class Client {
 	 * @var License
 	 */
 	private $license;
-	
+
 	/**
 	 * Instance of Updater class.
 	 *
@@ -134,7 +134,7 @@ class Client {
 	 * @var Updater
 	 */
 	private $updater;
-	
+
 	/**
 	 * Initialize the class.
 	 *
@@ -152,7 +152,7 @@ class Client {
 		$this->product_id = ! empty( $product_id ) ? (int) $product_id : false;
 		$this->set_basename_and_slug();
 	}
-	
+
 	/**
 	 * Initialize insights class.
 	 *
@@ -162,15 +162,15 @@ class Client {
 		if ( ! is_null( $this->insights ) ) {
 			return $this->insights;
 		}
-		
+
 		if ( ! class_exists( __NAMESPACE__ . '\Insights' ) ) {
 			require_once __DIR__ . '/Insights.php';
 		}
 		$this->insights = new Insights( $this );
-		
+
 		return $this->insights;
 	}
-	
+
 	/**
 	 * Initialize Promotions class.
 	 *
@@ -184,10 +184,10 @@ class Client {
 			require_once __DIR__ . '/Promotions.php';
 		}
 		$this->promotions = new Promotions( $this );
-		
+
 		return $this->promotions;
 	}
-	
+
 	/**
 	 * Initialize license checker.
 	 *
@@ -205,7 +205,7 @@ class Client {
 //
 //		return $this->license;
 //	}
-	
+
 	/**
 	 * Initialize Plugin/Theme updater.
 	 *
@@ -241,7 +241,7 @@ class Client {
 //
 //		return $this->updater;
 //	}
-	
+
 	/**
 	 * API Endpoint.
 	 *
@@ -280,16 +280,16 @@ class Client {
 		$URL = apply_filters( $this->slug . '_WebAppick_API_URL', $URL, $this->API_EndPoint, $route, $this->apiVersion, $this->clientVersion );
 		return untrailingslashit( $URL );
 	}
-	
+
 	/**
 	 * Set project basename, slug and version.
 	 *
 	 * @return void
 	 */
 	protected function set_basename_and_slug() {
-		
+
 		if ( false === strpos( $this->file, WP_CONTENT_DIR . '/themes/' ) ) {
-			
+
 			$this->basename = plugin_basename( $this->file );
 			/** @noinspection SpellCheckingInspection, PhpUnusedLocalVariableInspection */
 			list( $this->slug, $mainfile ) = explode( '/', $this->basename );
@@ -299,14 +299,14 @@ class Client {
 			$this->type = 'plugin';
 		} else {
 			$this->basename = str_replace( WP_CONTENT_DIR . '/themes/', '', $this->file );
-			
+
 			list( $this->slug, $main_file ) = explode( '/', $this->basename );
 			$theme = wp_get_theme( $this->slug );
 			$this->project_version = $theme->version;
 			$this->type = 'theme';
 		}
 	}
-	
+
 	/**
 	 * Client UserAgent String.
 	 *
@@ -315,7 +315,7 @@ class Client {
 	private function __user_agent() {
 		return 'WebAppick/' . md5( esc_url( home_url() ) ) . ';';
 	}
-	
+
 	/**
 	 * Send request to remote endpoint.
 	 *
@@ -331,7 +331,7 @@ class Client {
 			'user-agent' => $this->__user_agent(),
 			'Accept'     => 'application/json',
 		);
-		
+
 		/**
 		 * before request to api server.
 		 *
@@ -396,9 +396,9 @@ class Client {
 		}
 		return $response;
 	}
-	
+
 	//===> Getters.
-	
+
 	/**
 	 * Get Version of this client.
 	 *
@@ -407,7 +407,7 @@ class Client {
 	public function getClientVersion() {
 		return $this->clientVersion;
 	}
-	
+
 	/**
 	 * Get API URI.
 	 *
@@ -416,7 +416,7 @@ class Client {
 	public function getApi() {
 		return $this->API_EndPoint;
 	}
-	
+
 	/**
 	 * Get API Version using by this client.
 	 *
@@ -425,7 +425,7 @@ class Client {
 	public function getApiVersion() {
 		return $this->apiVersion;
 	}
-	
+
 	/**
 	 * Get Hash of current Plugin/Theme.
 	 *
@@ -434,7 +434,7 @@ class Client {
 	public function getHash() {
 		return $this->hash;
 	}
-	
+
 	/**
 	 * Get Plugin/Theme Name.
 	 *
@@ -443,7 +443,7 @@ class Client {
 	public function getName() {
 		return $this->name;
 	}
-	
+
 	/**
 	 * Store Product ID.
 	 *
@@ -452,7 +452,7 @@ class Client {
 	public function getProductId() {
 		return $this->product_id;
 	}
-	
+
 	/**
 	 * Get Plugin/Theme file.
 	 *
@@ -461,7 +461,7 @@ class Client {
 	public function getFile() {
 		return $this->file;
 	}
-	
+
 	/**
 	 * Get Plugin/Theme base name.
 	 *
@@ -470,7 +470,7 @@ class Client {
 	public function getBasename() {
 		return $this->basename;
 	}
-	
+
 	/**
 	 * Get Plugin/Theme Slug.
 	 *
@@ -479,7 +479,7 @@ class Client {
 	public function getSlug() {
 		return $this->slug;
 	}
-	
+
 	/**
 	 * Get Plugin/Theme Project Version.
 	 *
@@ -488,7 +488,7 @@ class Client {
 	public function getProjectVersion() {
 		return $this->project_version;
 	}
-	
+
 	/**
 	 * Get Project Type Plugin/Theme.
 	 *

@@ -31,7 +31,7 @@ class DynamicAttributes {
 	 *
 	 * @return string
 	 */
-	public static function getDynamicAttributeValue( $attribute, $merchant_attribute, $product, $config ) {
+	public static function getDynamicAttributeValue( $attribute, $merchant_attribute, $product, $config, $parent_product=null ) {
 
 		//$get_attribute_value_by_type = new AttributeValueByType( $attribute, $merchant_attribute, $product, $config );
 		$getValue         = maybe_unserialize( get_option( $attribute ) );
@@ -65,7 +65,7 @@ class DynamicAttributes {
 						$result = '';
 					}
 
-					$conditionName = ( new AttributeValueByType( $attribute, $product, $config ) )->get_value( $name );
+					$conditionName = ( new AttributeValueByType( $attribute, $product, $config, $merchant_attribute, $parent_product ) )->get_value( $name );
 
 					if ( 'weight' === $name ) {
 						$unit = ' ' . get_option( 'woocommerce_weight_unit' );
@@ -84,7 +84,7 @@ class DynamicAttributes {
 					if ( 'pattern' === $type[ $key ] ) {
 						$conditionValue = $value_pattern[ $key ];
 					} elseif ( 'attribute' === $type[ $key ] ) {
-						$conditionValue = ( new AttributeValueByType( $attribute, $product, $config ) )->get_value( $value_attribute[ $key ] );
+						$conditionValue = ( new AttributeValueByType( $attribute, $product, $config, $merchant_attribute, $parent_product ) )->get_value( $value_attribute[ $key ] );
 					} elseif ( 'remove' === $type[ $key ] ) {
 						$conditionValue = '';
 					}
@@ -257,7 +257,7 @@ class DynamicAttributes {
 				$result = $default_value_pattern;
 			} elseif ( 'attribute' === $default_type ) {
 				if ( ! empty( $default_value_attribute ) ) {
-					$result = ( new AttributeValueByType( $attribute, $product, $config ) )->get_value( $default_value_attribute );
+					$result = ( new AttributeValueByType( $attribute, $product, $config, $merchant_attribute, $parent_product ) )->get_value( $default_value_attribute );
 				}
 			} elseif ( 'remove' === $default_type ) {
 				$result = '';

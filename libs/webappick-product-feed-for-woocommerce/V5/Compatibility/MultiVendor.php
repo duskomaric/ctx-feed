@@ -58,7 +58,10 @@ class MultiVendor
 						if ( isset( $info['feedrules']['vendors'] ) ) {
 							if ( in_array( $user_id, $info['feedrules']['vendors'] ) ) {
 								$fileName = $info['feedrules']['filename'];
-								$fileURL  = $info['url'];
+								$fileURL = '';
+								if(isset($info['url'])) {
+									$fileURL  = $info['url'];
+								}
 								?>
 								<tr>
 									<td><?php echo esc_html( $fileName ); ?></td>

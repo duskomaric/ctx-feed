@@ -87,7 +87,7 @@ class Settings extends RestController {
 					'args'                => [],
 				],
 				'schema' => [ $this, 'get_item_schema' ],
-			],
+			]
 
 		);
 		// Custom Fields
@@ -107,7 +107,7 @@ class Settings extends RestController {
 					'permission_callback' => [ $this, 'get_item_permissions_check' ],
 					'args'                => [],
 				]
-			],
+			]
 		);
 
 		// What we collect
@@ -127,7 +127,7 @@ class Settings extends RestController {
 					'permission_callback' => [ $this, 'get_item_permissions_check' ],
 					'args'                => [],
 				]
-			],
+			]
 		);
 	}
 

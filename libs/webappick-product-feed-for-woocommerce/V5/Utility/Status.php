@@ -468,7 +468,7 @@ class Status {
 			'limit'            => -1,
 			'offset'           => 0,
 			'status'           => 'publish',
-			'type'             => array( 'simple', 'variable', 'grouped', 'external', 'composite', 'bundle', 'yith_bundle', 'yith-composite', 'subscription', 'variable-subscription', 'woosb' ),
+			'type'             => array( 'simple', 'variable', 'grouped', 'external', 'composite', 'bundle', 'yith_bundle', 'yith-composite', 'subscription', 'variable-subscription', 'woosb', 'woosg', 'auction', 'course' ),
 			'orderby'          => 'date',
 			'order'            => 'DESC',
 			'return'           => 'ids',
@@ -679,7 +679,9 @@ class Status {
 		if ( ! empty( $feed_data ) and is_array( $feed_data ) ) {
 			foreach ( $feed_data as $key => $data ) {
 				$feed_info   = maybe_unserialize( get_option( $data['option_name'] ) );
-				$feed_urls[] = $feed_info['url'];
+				if(isset($feed_info['url'])) {
+					$feed_urls[] = $feed_info['url'];
+				}
 			}
 		}
 
@@ -699,6 +701,8 @@ class Status {
 //		$feed_urls = '';
 		if ( ! empty($feed_urls) ) {
 			$feed_urls = implode("\n",$feed_urls);
+		}else{
+			$feed_urls = '';
 		}
 		$status_text .= "Feed Files\n";
 		$status_text .= $feed_urls;

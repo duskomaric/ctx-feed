@@ -105,6 +105,14 @@ class FormatOutput {
 				$output = $this->get_parent_if_empty( $output );
 			}
 
+			if ( in_array( 21, $outputTypes ) ) {
+				$output = \htmlspecialchars( $output, ENT_XML1 | ENT_QUOTES, 'UTF-8' );
+			}
+
+			if ( in_array( 22, $outputTypes ) ) {
+				$output = \htmlspecialchars_decode( $output, ENT_XML1 | ENT_QUOTES );
+			}
+
 			if ( 'xml' === $this->config->get_feed_file_type() && in_array( 9, $outputTypes ) ) { // Add CDATA
 				$output = '<![CDATA[' . $output . ']]>';
 			}
@@ -221,7 +229,7 @@ class FormatOutput {
 	private function get_parent_lang_child_is_empty( $output, $outputTypes ) {
 		$id = $this->product->get_id();
 		//check if the format type is `parent` or `parent_lang_if_empty`
-		if ( in_array( 23, $outputTypes) ) {
+		if ( in_array( 23, $outputTypes ) ) {
 			$force_parent = true;
 		} elseif ( in_array( 24, $outputTypes ) ) {
 			$force_parent = empty( $output );
@@ -230,7 +238,7 @@ class FormatOutput {
 		 * when format type is `parent` then force getting parent value
 		 * when format type is `parent_lang_if_empty` then get the parent value on current empty value
 		 */
-		if ( isset($force_parent) ) {
+		if ( isset( $force_parent ) ) {
 			//when wpml plugin is activated, get parent language post id
 			if ( class_exists( 'SitePress', false ) ) {
 				$parent_id = apply_filters( 'woo_feed_original_post_id', $id );
@@ -242,11 +250,12 @@ class FormatOutput {
 
 			// when polylang plugin is activated, get parent language post id
 			if ( defined( 'POLYLANG_BASENAME' ) || function_exists( 'PLL' ) ) {
-				$parent_id = woo_feed_pll_get_original_post_id( $id );
+//				$parent_id = woo_feed_pll_get_original_post_id( $id );
+				$parent_id = CommonHelper::woo_feed_pll_get_original_post_id( $id );
 			}
 
 			//get attribute value of parent language post id
-			if ( ! empty( $parent_id ) ) {
+			if ( ! empty( $parent_id ) && empty( $output ) ) {
 				$parentProduct = wc_get_product( $parent_id );
 				$output        = ProductHelper::get_attribute_value_by_type( $this->attribute, $parentProduct, $this->config );
 			}

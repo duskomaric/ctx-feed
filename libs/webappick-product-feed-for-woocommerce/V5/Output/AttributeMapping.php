@@ -31,7 +31,7 @@ class AttributeMapping {
 	 *
 	 * @return string
 	 */
-	public static function getMappingValue( $attribute, $merchant_attribute, $product, $config ) {
+	public static function getMappingValue( $attribute, $merchant_attribute, $product, $config, $parent_product ) {
 
 		$attributes = get_option( $attribute );
 		$glue       = ! empty( $attributes['glue'] ) ? $attributes['glue'] : ' ';
@@ -39,7 +39,7 @@ class AttributeMapping {
 
 		if ( isset( $attributes['mapping'] ) ) {
 			foreach ( $attributes['mapping'] as $map ) {
-				$get_attribute_value_by_type = new AttributeValueByType( $attribute, $product, $config, $merchant_attribute );
+				$get_attribute_value_by_type = new AttributeValueByType( $attribute, $product, $config, $merchant_attribute, $parent_product );
 				$get_value               = $get_attribute_value_by_type->get_value( $map );
 				if ( ! empty( $get_value ) ) {
 					$output .= $glue . $get_value;

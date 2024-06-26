@@ -436,7 +436,7 @@ category_id,category
 435,"clothing & accessories > clothing > women's clothing > tights, socks & hosiery"
 436,clothing & accessories > clothing > women's clothing > tops > sweatshirts & hoodies
 437,clothing & accessories > clothing > women's clothing > swimwear
-438,clothing & accessories > clothing > women's clothing > suits & blazers
+438,clothing & accessories > clothing > women's clothing > tops > suits & blazers
 439,clothing & accessories > clothing > women's clothing > bottoms > shorts
 440,clothing & accessories > clothing > women's clothing > tops > sweaters
 441,clothing & accessories > clothing > women's clothing > pants
@@ -450,7 +450,7 @@ category_id,category
 449,clothing & accessories > clothing > women's clothing > lingerie & sleepwear
 450,clothing & accessories > clothing > women's clothing > jeans
 451,clothing & accessories > clothing > women's clothing > jumpsuits & rompers
-452,clothing & accessories > clothing > women's clothing > leggings
+452,clothing & accessories > clothing > women's clothing > bottoms > leggings
 453,clothing & accessories > clothing > women's clothing > activewear
 454,clothing & accessories > clothing > women's clothing > coats & jackets
 455,clothing & accessories > clothing > women's clothing
@@ -469,7 +469,7 @@ category_id,category
 468,clothing & accessories > clothing > men's clothing > activewear
 469,clothing & accessories > clothing > men's clothing > blazers & sport coats
 470,clothing & accessories > clothing > men's clothing > coats & jackets
-471,clothing & accessories > clothing > men's clothing > casual shirts
+471,clothing & accessories > clothing > men's clothing > tops > casual shirts
 472,clothing & accessories > clothing > men's clothing
 473,clothing & accessories > clothing > kids' clothing > girls' clothing > swimwear
 474,clothing & accessories > clothing > kids' clothing > girls' clothing > underwear
@@ -2912,3 +2912,57 @@ category_id,category
 2915,sporting goods > outdoor recreation > climbing > ice climbing > ice axes
 2916,health & beauty > beauty > nail care > nail tools > hand & nail treatment creams
 2917,home > cleaning supplies > party supplies > piñatas
+2918,clothing & accessories > clothing > costumes
+2919,clothing & accessories > clothing > baby clothing > other baby clothing & accessories
+2920,clothing & accessories > clothing > uniforms & work clothing
+2921,clothing & accessories > clothing > uniforms & work clothing > aprons
+2922,clothing & accessories > clothing > uniforms & work clothing > coveralls & jumpsuits
+2923,clothing & accessories > clothing > uniforms & work clothing > jackets & vests
+2924,clothing & accessories > clothing > uniforms & work clothing > lab coats
+2925,clothing & accessories > clothing > uniforms & work clothing > other uniforms & work clothing
+2926,clothing & accessories > clothing > uniforms & work clothing > pants & shorts
+2927,clothing & accessories > clothing > uniforms & work clothing > scrubs
+2928,clothing & accessories > clothing > uniforms & work clothing > shirts
+2929,clothing & accessories > clothing accessories > men's accessories > belt buckles
+2930,clothing & accessories > clothing accessories > unisex accessories
+2931,clothing & accessories > clothing accessories > unisex accessories > scarves & bandanas
+2932,clothing & accessories > clothing accessories > unisex accessories > shoelaces
+2933,clothing & accessories > clothing accessories > women's accessories > belt buckles
+2934,clothing & accessories > clothing > kids' clothing > boys' clothing > boys' uniforms
+2935,clothing & accessories > clothing > kids' clothing > boys' clothing > vests
+2936,clothing & accessories > clothing > kids' clothing > girls' clothing > girls' uniforms
+2937,clothing & accessories > clothing > kids' clothing > girls' clothing > skorts
+2938,clothing & accessories > clothing > kids' clothing > girls' clothing > vests
+2939,clothing & accessories > clothing > men's clothing > activewear > activewear jackets
+2940,clothing & accessories > clothing > men's clothing > activewear > activewear leggings & pants
+2941,clothing & accessories > clothing > men's clothing > tops > vests
+2942,clothing & accessories > clothing > unisex clothing
+2943,clothing & accessories > clothing > women's clothing > activewear > activewear jackets
+2944,clothing & accessories > clothing > women's clothing > activewear > activewear leggings
+2945,clothing & accessories > clothing > women's clothing > activewear > activewear shorts
+2946,clothing & accessories > clothing > women's clothing > activewear > activewear skirts
+2947,clothing & accessories > clothing > women's clothing > activewear > activewear sweatshirts & hoodies
+2948,clothing & accessories > clothing > women's clothing > activewear > sports bras
+2949,clothing & accessories > clothing > women's clothing > lingerie & sleepwear > bra accessories
+2950,clothing & accessories > clothing > women's clothing > lingerie & sleepwear > camisoles
+2951,clothing & accessories > clothing > women's clothing > lingerie & sleepwear > corsets
+2952,clothing & accessories > clothing > women's clothing > lingerie & sleepwear > garter belts
+2953,clothing & accessories > clothing > women's clothing > lingerie & sleepwear > teddies
+2954,clothing & accessories > clothing > women's clothing > maternity clothing
+2955,clothing & accessories > clothing > women's clothing > maternity clothing > maternity bras
+2956,clothing & accessories > clothing > women's clothing > maternity clothing > maternity coats & jackets
+2957,clothing & accessories > clothing > women's clothing > maternity clothing > maternity dresses
+2958,clothing & accessories > clothing > women's clothing > maternity clothing > maternity jeans
+2959,clothing & accessories > clothing > women's clothing > maternity clothing > maternity jumpsuits & rompers
+2960,clothing & accessories > clothing > women's clothing > maternity clothing > maternity leggings
+2961,clothing & accessories > clothing > women's clothing > maternity clothing > maternity panties
+2962,clothing & accessories > clothing > women's clothing > maternity clothing > maternity pants
+2963,clothing & accessories > clothing > women's clothing > maternity clothing > maternity sleepwear
+2964,clothing & accessories > clothing > women's clothing > maternity clothing > maternity sweaters
+2965,clothing & accessories > clothing > women's clothing > maternity clothing > maternity swimwear
+2966,clothing & accessories > shoes & footwear > unisex shoes
+2967,clothing & accessories > clothing > women's clothing > tops > vests
+2968,clothing & accessories > clothing > women's clothing > maternity clothing > maternity sweatshirts & hoodies
+2969,clothing & accessories > clothing > women's clothing > maternity clothing > maternity pantyhose & tights
+2970,clothing & accessories > clothing > women's clothing > maternity clothing > maternity shorts
+2971,clothing & accessories > clothing > women's clothing > maternity clothing > maternity tops & t-shirts

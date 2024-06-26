@@ -18,15 +18,17 @@ class SitePressCompatibility {
 	/**
 	 * Constructor.
 	 */
-	public function __construct() {
+	public function __construct()
+	{
 		// Return original post id for WPML Translated Product.
-		add_filter( 'woo_feed_original_post_id', array( $this, 'original_post_id' ), 10, 1 );
+		add_filter('woo_feed_original_post_id', array($this, 'original_post_id'), 10, 1);
+		if ( class_exists('SitePress', false ) ) {
+			add_action('before_woo_feed_generate_batch_data', array($this, 'switch_language'), 10, 1);
+			add_action('after_woo_feed_generate_batch_data', array($this, 'restore_language'), 10, 1);
 
-		add_action( 'before_woo_feed_generate_batch_data', array( $this, 'switch_language' ), 10, 1 );
-		add_action( 'after_woo_feed_generate_batch_data', array( $this, 'restore_language' ), 10, 1 );
-
-		add_action( 'before_woo_feed_get_product_information', array( $this, 'switch_language' ), 10, 1 );
-		add_action( 'after_woo_feed_get_product_information', array( $this, 'restore_language' ), 10, 1 );
+			add_action('before_woo_feed_get_product_information', array($this, 'switch_language'), 10, 1);
+			add_action('after_woo_feed_get_product_information', array($this, 'restore_language'), 10, 1);
+		}
 	}
 
 	/**

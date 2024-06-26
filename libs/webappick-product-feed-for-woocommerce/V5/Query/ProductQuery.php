@@ -65,6 +65,9 @@ class ProductQuery implements QueryInterface {
 			'subscription',
 			'variable-subscription',
 			'woosb',
+			'woosg',
+			'auction',
+			'course',
 		);
 
 		return apply_filters( 'ctx_feed_filter_product_types_for_product_query', $product_types );

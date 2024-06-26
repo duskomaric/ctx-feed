@@ -9,12 +9,12 @@ class Cache {
 	 * @return mixed|false  false if cache not found.
 	 * @since 3.3.10
 	 */
-	public static function get( $key ) {
+	public static function get( $key, $prefix = '__woo_feed_cache_' ) {
 		if ( empty( $key ) ) {
 			return false;
 		}
 
-		return get_transient( '__woo_feed_cache_' . $key );
+		return get_transient( $prefix . $key );
 	}
 
 	/**
@@ -28,7 +28,7 @@ class Cache {
 	 *
 	 * @return bool
 	 */
-	public static function set( $key, $data, $expiration = false ) {
+	public static function set( $key, $data, $expiration = false, $prefix = '__woo_feed_cache_' ) {
 		if ( empty( $key ) ) {
 			return false;
 		}
@@ -38,15 +38,15 @@ class Cache {
 			$expiration = (int) $expiration['cache_ttl'];
 		}
 
-		return set_transient( '__woo_feed_cache_' . $key, $data, $expiration );
+		return set_transient( $prefix . $key, $data, $expiration );
 	}
 
-	public static function delete( $key ) {
+	public static function delete( $key, $prefix = '__woo_feed_cache_' ) {
 		if ( empty( $key ) ) {
 			return false;
 		}
 
-		return delete_transient( '__woo_feed_cache_' . $key );
+		return delete_transient( $prefix . $key );
 
 	}
 

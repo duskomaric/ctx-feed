@@ -11,7 +11,7 @@ class QueryFactory {
 	 *
 	 * @return array
 	 */
-	public static function get_ids( $config, $args = [] ) {
+	public static function get_ids( $config, $args = []) {
 		$template  = $config->get_feed_template();
 		$queryType = Settings::get( 'product_query_type' );
 
@@ -30,7 +30,6 @@ class QueryFactory {
 		 *
 		 * @since 3.2.10
 		 */
-
 		do_action( 'woo_feed_before_product_loop', [], $feedRules, $config );
 
 		/**
@@ -42,7 +41,7 @@ class QueryFactory {
 		/**
 		 * Fires after looping through request product for getting product data
 		 *
-		 * @param int[]  $productIds
+		 * @param int[] $productIds
 		 * @param Config $config
 		 *
 		 * @since 3.2.10

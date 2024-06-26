@@ -41,6 +41,9 @@ class WCReviewQuery implements QueryInterface {
 			'subscription',
 			'variable-subscription',
 			'woosb',
+			'woosg',
+			'auction',
+			'course'
 		];
 
 		// Include Product Variations with db query if configured.

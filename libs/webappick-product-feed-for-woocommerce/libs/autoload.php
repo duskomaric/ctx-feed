@@ -24,7 +24,7 @@ function woo_feed_autoloader( $class ) {
             require_once $file_path;
         } elseif ( file_exists( $file_secondary_path ) ) {
             require_once( $file_secondary_path );
-        }    
+        }
 }
 
 }
